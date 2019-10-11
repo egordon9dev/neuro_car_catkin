@@ -1,0 +1,113 @@
+<sdf version="1.5">
+  <world name="default">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Name it uniquely to not conflict with <include>'d model  -->
+    <model name="neurocar">
+      <include>
+	      <uri>model://create</uri>
+      </include>
+      <plugin name="differential_drive_controller"     filename="libgazebo_ros_diff_drive.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>10</updateRate>
+
+
+        <leftJoint>create::right_wheel</leftJoint>
+        <rightJoint>create::left_wheel</rightJoint>
+
+        <wheelSeparation>0.5380</wheelSeparation>
+        <wheelDiameter>0.2410</wheelDiameter>
+
+        <torque>20</torque>
+        <commandTopic>cmd_vel</commandTopic>
+
+        <!-- topic name published in the cpp file -->
+        <odometryTopic>odom</odometryTopic>
+        <odometryFrame>odom</odometryFrame>
+        <robotBaseFrame>base</robotBaseFrame>
+
+        <publishWheelTF>true</publishWheelTF>
+        <publishWheelJointState>true</publishWheelJointState>
+      </plugin>
+      <model name="cam">
+        <model name="camera">
+          <pose>0 0 0.05 0 0 0</pose>
+          <link name="link">
+            <inertial>
+              <mass>0.1</mass>
+              <inertia>
+                <ixx>0.000166667</ixx>
+                <iyy>0.000166667</iyy>
+                <izz>0.000166667</izz>
+              </inertia>
+            </inertial>
+            <collision name="collision">
+              <geometry>
+                <box>
+                  <size>0.1 0.1 0.1</size>
+                </box>
+              </geometry>
+            </collision>
+            <visual name="visual">
+              <geometry>
+                <box>
+                  <size>0.1 0.1 0.1</size>
+                </box>
+              </geometry>
+            </visual>
+            <sensor name="camera" type="camera">
+              <camera>
+                <horizontal_fov>1.047</horizontal_fov>
+                <image>
+                  <width>160</width>
+                  <height>120</height>
+                </image>
+                <clip>
+                  <near>0.1</near>
+                  <far>100</far>
+                </clip>
+                <!--<save enabled="true">
+                  <path>~/Documents/rg/neuro_car_imgs/cam1</path>
+                </save>-->
+                <update_rate>20</update_rate>
+              </camera>
+              <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>30.0</updateRate>
+                <cameraName>neurocar/camera</cameraName>
+                <imageTopicName>image_raw</imageTopicName>
+                <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+                <frameName>camera_link</frameName>
+                <hackBaseline>0.07</hackBaseline>
+                <distortionK1>0.0</distortionK1>
+                <distortionK2>0.0</distortionK2>
+                <distortionK3>0.0</distortionK3>
+                <distortionT1>0.0</distortionT1>
+                <distortionT2>0.0</distortionT2>
+              </plugin>
+              <always_on>1</always_on>
+              <visualize>true</visualize>
+            </sensor>
+          </link>
+        </model>
+        <pose>0.1 0 0.1 0 0 0</pose>
+      </model>
+      <joint name="cam_joint" type="revolute">
+        <parent>neurocar::create::base</parent>
+        <child>neurocar::cam::camera::link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
+    </model>
+  </world>
+</sdf>

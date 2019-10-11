@@ -1,0 +1,58 @@
+<sdf version="1.5">
+  <world name="default">
+    <!-- Ground -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <model name="neurocar">
+      <include>
+        <uri>model://pioneer2dx</uri>
+      </include>
+
+      <plugin filename="libDiffDrivePlugin.so" name="diff_drive">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>10</updateRate>
+
+
+        <left_joint>pioneer2dx::pioneer2dx::left_wheel_hinge</left_joint>
+        <right_joint>pioneer2dx::pioneer2dx::right_wheel_hinge</right_joint>
+
+        <wheelSeparation>0.5380</wheelSeparation>
+        <wheelDiameter>0.2410</wheelDiameter>
+
+        <torque>20</torque>
+        <commandTopic>cmd_vel</commandTopic>
+
+        <!-- topic name published in the cpp file -->
+        <odometryTopic>odom</odometryTopic>
+        <odometryFrame>odom</odometryFrame>
+        <robotBaseFrame>base</robotBaseFrame>
+
+        <publishWheelTF>true</publishWheelTF>
+        <publishWheelJointState>true</publishWheelJointState>
+      </plugin>
+
+      <include>
+        <uri>model://camera</uri>
+        <pose>0.2 0 .3 0 0 0</pose>
+      </include>
+
+      <joint name="camera_joint" type="revolute">
+        <parent>pioneer2dx::pioneer2dx::chassis</parent>
+        <child>pioneer2dx::camera::link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
+    </model>
+  </world>
+</sdf>
