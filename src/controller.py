@@ -2,18 +2,23 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
-
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
 from math import sin
-gotData = False
-n = 0
+import numpy as np
+
+bridge = CvBridge()
+
 def callback(img):
-    global n
-    global gotData
-    gotData = True
-    file = open("out", "wb")
-    n+=1
-    file.write("QWERTY " + str(n) + "\n")
-    file.close()
+    try:
+        cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
+    except CvBridgeError as e:
+        print(e)
+
+    ndarray = np.asarray(cv_image)
+
+    cv2.imshow("Image window", cv_image)
+    cv2.waitKey(3)
 
 def main():
     sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
@@ -27,8 +32,7 @@ def main():
 
     msg.linear.x = 5
     while not rospy.is_shutdown():
-        if gotData:
-            pub.publish(msg)
+        pub.publish(msg)
         rate.sleep()
 
 if __name__ == '__main__':
