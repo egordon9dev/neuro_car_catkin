@@ -1,3 +1,3 @@
 # neuro_car_catkin
 
-this goes in `~/catkin_ws/src
+clone this to `~/catkin_ws/src`
