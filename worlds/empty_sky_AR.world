@@ -55,7 +55,7 @@
       </plugin>
       <model name="cam">
         <model name="camera">
-          <pose>0 0 0.05 0 0 0</pose>
+          <pose>0 0 0.4 0 0 0</pose>
           <link name="link">
             <inertial>
               <mass>0.1</mass>
@@ -81,10 +81,10 @@
             </visual>
             <sensor name="camera" type="camera">
               <camera>
-                <horizontal_fov>1.047</horizontal_fov>
+                <horizontal_fov>2.1</horizontal_fov>
                 <image>
-                  <width>160</width>
-                  <height>120</height>
+                  <width>1280</width>
+                  <height>720</height>
                 </image>
                 <clip>
                   <near>0.1</near>
@@ -93,7 +93,6 @@
                 <!--<save enabled="true">
                   <path>~/Documents/rg/neuro_car_imgs/cam1</path>
                 </save>-->
-                <update_rate>20</update_rate>
               </camera>
               <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
                 <alwaysOn>true</alwaysOn>
@@ -113,6 +112,35 @@
               <visualize>true</visualize>
             </sensor>
           </link>
+          <link name="laser_link">
+            <pose>0 0 -.4 0 0 0</pose>
+            <sensor name="laser" type="ray">
+              <always_on>1</always_on>
+              <visualize>true</visualize>
+              <ray>
+                  <scan>
+                  <horizontal>
+                    <samples>180</samples>
+                    <resolution>1.000000</resolution>
+                    <min_angle>-1.57</min_angle>
+                    <max_angle>1.57</max_angle>
+                  </horizontal>
+                  </scan>
+                  <range>
+                  <min>0.080000</min>
+                  <max>10</max>
+                  <resolution>0.010000</resolution>
+                  </range>
+              </ray>
+              <plugin name='laser_controller' filename='libgazebo_ros_laser.so'>
+                  <alwaysOn>true</alwaysOn>
+                  <updateRate>30.0</updateRate>
+                  <topicName>/neurocar/laser/scan</topicName>
+                  <frameName>laser_link</frameName>
+              </plugin>
+              <update_rate>20</update_rate>
+            </sensor>
+          </link>
         </model>
         <pose>0.1 0 0.1 0 0 0</pose>
       </model>
@@ -127,6 +155,18 @@
           </limit>
         </axis>
       </joint>
+      <joint name="laser_joint" type="revolute">
+        <parent>neurocar::create::base</parent>
+        <child>neurocar::cam::camera::laser_link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
+      <pose>-5 3 0 0 0 0.7</pose>
     </model>
   </world>
 </sdf>
