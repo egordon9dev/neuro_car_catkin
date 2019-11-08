@@ -81,7 +81,7 @@
             </visual>
             <sensor name="camera" type="camera">
               <camera>
-                <horizontal_fov>2.1</horizontal_fov>
+                <horizontal_fov>2.0</horizontal_fov>
                 <image>
                   <width>1280</width>
                   <height>720</height>
@@ -93,6 +93,10 @@
                 <!--<save enabled="true">
                   <path>~/Documents/rg/neuro_car_imgs/cam1</path>
                 </save>-->
+                <lens>
+                  <type>stereographic</type>
+                  <scale_to_hfov>true</scale_to_hfov>
+                </lens>
               </camera>
               <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
                 <alwaysOn>true</alwaysOn>
@@ -128,7 +132,7 @@
                   </scan>
                   <range>
                   <min>0.080000</min>
-                  <max>10</max>
+                  <max>300</max>
                   <resolution>0.010000</resolution>
                   </range>
               </ray>

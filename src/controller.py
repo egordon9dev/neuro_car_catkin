@@ -8,6 +8,7 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from math import sin
 import numpy as np
+import math
 import nengo
 
 bridge = CvBridge()
@@ -16,6 +17,7 @@ width = 1280
 height = 720
 angular_vel = 0
 trans_vel = 0
+img_arr = None
 
 def dist(p1, p2):
     return ((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)**0.5;
@@ -52,14 +54,9 @@ def find_center_point(contour1, contour2):
     p2 = (m2["m10"]/m2["m00"], m2["m01"]/m2["m00"])
     return ((p1[0]+p2[0])/2, (p1[1]+p2[1])/2)
 
-def move(t, x):
-    speed, rotation = x
-
-
-    #return reward
-
 def callback(img):
     global angular_vel, trans_vel
+    global img_arr
     try:
         cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
     except CvBridgeError as e:
@@ -89,36 +86,132 @@ def callback(img):
 
         # [vx1, vy1, x1, y1] = cv2.fitLine(curbs[0], cv2.DIST_L2,0,0,0.01,0.01)
 
-    ndarray = np.asarray(cv_image)
+    img_arr = np.asarray(contours_img).flatten()
 
     cv2.imshow("Image window", contours_img)
     cv2.waitKey(3)
 
-
 log_string = String()
+log_string.data = ""
+min_range = 10000
+min_range_angle = 0
+max_range = 0
+max_range_angle = 0
 
-
-def laserCallback(laserScan):
+def laser_callback(laser_scan):
+    global min_range, min_range_angle, max_range, max_range_angle
     global log_string
-    log_string.data = "got laser: " + str(laserScan.range_min) + " to " + str(laserScan.range_max);
+    avg_range = 0
+    min_range = 100000
+    min_range_angle = 0
+    max_range = 0
+    max_range_angle = 0
+    if len(laser_scan.ranges) > 0:
+        for i, rng in enumerate(laser_scan.ranges):
+            avg_range += rng
+            current_angle = laser_scan.angle_min + i * laser_scan.angle_increment
+            if rng < min_range:
+                min_range = rng
+                min_range_angle = current_angle
+            if rng > max_range:
+                max_range = rng
+                max_range_angle = current_angle
+        avg_range /= len(laser_scan.ranges)
+    # log_string.data = "closest obstacle --- min " + str(min_range_angle) + " " + str(min_range) + " max " + str(max_range_angle) + " " + str(max_range)
 
 
-def main():
-    global angular_vel
-    global log_string
-    sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
-    ray_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laserCallback)
-    pub = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
-    log_pub = rospy.Publisher('neurocar/logger', String, queue_size=10)
-    rospy.init_node('controller', anonymous=True)
-    rate = rospy.Rate(2) # 10hz
-    msg = Twist()
-    msg.linear.x = 0
-    while not rospy.is_shutdown():
-        msg.angular.z = angular_vel
-        pub.publish(msg)
+sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
+ray_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
+pub = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
+log_pub = rospy.Publisher('neurocar/logger', String, queue_size=10)
+rospy.init_node('controller', anonymous=True)
+rate = rospy.Rate(2) # 10hz
+neurocar_msg = Twist()
+
+def polar_to_rect(r, theta):
+    return r * math.cos(theta), r * math.sin(theta)
+
+def move(t, x):
+    global angular_vel, trans_vel
+
+    prev_min_range = min_range
+
+    # send action
+    neurocar_msg.linear.x = trans_vel
+    neurocar_msg.angular.z = angular_vel
+    pub.publish(neurocar_msg)
+
+    if len(log_string.data) > 0:
         log_pub.publish(log_string)
-        rate.sleep()
+        log_string.data = ""
+
+    # do action
+    rate.sleep()
+
+    # network reward
+    # min_range_vec = polar_to_rect(min_range, min_range_angle)
+    # max_range_vec = polar_to_rect(max_range, max_range_angle)
+    # delta_vec = (max_range_vec[0] - min_range_vec[0], max_range_vec[1] - min_range_vec[1])
+
+    reward = 0
+    # move away from obstacles
+    reward += min_range - prev_min_range
+    # go fast
+    reward += 10 * abs(neurocar_msg.linear.x)
+
+    return reward
+#
+# def main():
+#     global angular_vel, trans_vel
+#     global log_string
+#     while not rospy.is_shutdown():
+
+model = nengo.Network(seed=8)
+with model:
+
+    movement = nengo.Ensemble(n_neurons=100, dimensions=2, radius=1.4)
+
+    movement_node = nengo.Node(move, size_in=2, label='reward')
+    nengo.Connection(movement, movement_node)
+
+    # radar = nengo.Ensemble(n_neurons=50, dimensions=3, radius=4)
+    # nengo.Connection(stim_radar, radar)
+
+    bg = nengo.networks.actionselection.BasalGanglia(3)
+    thal = nengo.networks.actionselection.Thalamus(3)
+    nengo.Connection(bg.output, thal.input)
+    #
+    #
+    # def u_fwd(x):
+    #     return 0.8
+    #
+    #
+    # def u_left(x):
+    #     return 0.6
+    #
+    #
+    # def u_right(x):
+    #     return 0.7
+
+
+    conn_fwd = nengo.Connection(radar, bg.input[0], function=u_fwd, learning_rule_type=nengo.PES())
+    conn_left = nengo.Connection(radar, bg.input[1], function=u_left, learning_rule_type=nengo.PES())
+    conn_right = nengo.Connection(radar, bg.input[2], function=u_right, learning_rule_type=nengo.PES())
+
+    nengo.Connection(thal.output[0], movement, transform=[[1], [0]])
+    nengo.Connection(thal.output[1], movement, transform=[[0], [1]])
+    nengo.Connection(thal.output[2], movement, transform=[[0], [-1]])
+
+    errors = nengo.networks.EnsembleArray(n_neurons=50, n_ensembles=3)
+    nengo.Connection(movement_node, errors.input, transform=-np.ones((3, 1)))
+    nengo.Connection(bg.output[0], errors.ensembles[0].neurons, transform=np.ones((50, 1)) * 4)
+    nengo.Connection(bg.output[1], errors.ensembles[1].neurons, transform=np.ones((50, 1)) * 4)
+    nengo.Connection(bg.output[2], errors.ensembles[2].neurons, transform=np.ones((50, 1)) * 4)
+    nengo.Connection(bg.input, errors.input, transform=1)
+
+    nengo.Connection(errors.ensembles[0], conn_fwd.learning_rule)
+    nengo.Connection(errors.ensembles[1], conn_left.learning_rule)
+    nengo.Connection(errors.ensembles[2], conn_right.learning_rule)
 
 if __name__ == '__main__':
     try:
