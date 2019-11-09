@@ -17,8 +17,14 @@ bridge = CvBridge()
 
 width = 1280
 height = 720
+
+shrink_width = 64
+shrink_height = 36
+
 angular_vel = 0
 trans_vel = 0
+img_arr = None
+log_msg = String()
 
 # acceleration: translational, rotational
 actions_list = [
@@ -33,20 +39,25 @@ actions_list = [
     [[1], [1]]
 ]
 
+
 def callback(img):
-    pass
-    # global angular_vel, trans_vel
-    # try:
-    #     cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
-    # except CvBridgeError as e:
-    #     print(e)
-    # edges_img = cv2.Canny(cv_image, 50, 250)
-    # contours_img, contours, hierarchy = cv2.findContours(edges_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE);
-    #
-    # cv2.imshow("Image window", contours_img)
-    # cv2.waitKey(3)
+    global img_arr, width, height
+    try:
+        cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
+    except CvBridgeError as e:
+        print(e)
+    cv_image = cv2.resize(cv_image, (shrink_width, shrink_height), interpolation=cv2.INTER_AREA)
+    edges_img = cv2.Canny(cv_image, 50, 250)
+    img_arr = np.asarray(edges_img).flatten().clip(0,1).astype(int)
+
+    log_msg.data = str("len: " + str(len(img_arr)) + str(img_arr))
+
+    blown_up = cv2.resize(edges_img, (width, height), interpolation=cv2.INTER_AREA)
+    cv2.imshow("Image window", blown_up)
+    cv2.waitKey(3)
 
 sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
+pub_log = rospy.Publisher('neurocar/log', String, queue_size=10)
 pub = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
 rospy.init_node('controller', anonymous=True)
 rate = rospy.Rate(60)  # 10hz
@@ -65,7 +76,7 @@ def move(t, x):
     neurocar_msg.linear.x = trans_vel
     neurocar_msg.angular.z = angular_vel
     pub.publish(neurocar_msg)
-
+    pub_log.publish(log_msg)
     # do action
     rate.sleep()
 
@@ -80,10 +91,12 @@ class InputManager:
     """
 
     def __init__(self):
-        self.dimensions = 1
+        global shrink_width, shrink_height
+        self.dimensions = shrink_width*shrink_height
 
     def function(self, t):
-        return np.array([1])
+        global img_arr
+        return np.ones(self.dimensions)
 
 class NeuralNet:
     """
@@ -135,27 +148,6 @@ class NeuralNet:
             for i in range(len(actions_list)):
                 nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
 
-            # nengo.Connection(thalamus.output, errors[:9])
-            # nengo.Connection(basal_ganglia.input, errors[9:18])
-            # nengo.Connection(movement_node, errors[19])
-
-            # # Learning on the FPGA
-            # adaptive_ensemble = FpgaPesEnsembleNetwork(
-            #     self.board,
-            #     n_neurons=1000,
-            #     dimensions=input_mansagdsfsf.dimensions,
-            #     learning_rate=self.learn_rate,
-            #     function=lambda x: self.init_transform,
-            #     label="pes ensemble"
-            # )
-            # nengo.Connection(input_node, adaptive_ensemble.input, synapse=self.learn_synapse)
-            # nengo.Connection(errors, adaptive_ensemble.error)
-            # nengo.Connection(adaptive_ensemble.output, basal_ganglia.input)
-
-
-            # learn_on = nengo.Node(self.learning_active)
-            # nengo.Connection(learn_on, errors[20])
-
         self.simulator = nengo_fpga.Simulator(self.model)
 
     def run_network(self, number_of_seconds):
@@ -172,7 +164,6 @@ class NeuralNet:
 
 # print("Syntax correct.")
 def main():
-    global width, height, img_arr
     input_manager = InputManager()
     network = NeuralNet(input_manager, move)
     network.run_network(60)
