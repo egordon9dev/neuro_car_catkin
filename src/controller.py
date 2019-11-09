@@ -34,16 +34,17 @@ actions_list = [
 ]
 
 def callback(img):
-    global angular_vel, trans_vel
-    try:
-        cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
-    except CvBridgeError as e:
-        print(e)
-    edges_img = cv2.Canny(cv_image, 50, 250)
-    contours_img, contours, hierarchy = cv2.findContours(edges_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE);
-
-    cv2.imshow("Image window", contours_img)
-    cv2.waitKey(3)
+    pass
+    # global angular_vel, trans_vel
+    # try:
+    #     cv_image = bridge.imgmsg_to_cv2(img, "bgr8")
+    # except CvBridgeError as e:
+    #     print(e)
+    # edges_img = cv2.Canny(cv_image, 50, 250)
+    # contours_img, contours, hierarchy = cv2.findContours(edges_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE);
+    #
+    # cv2.imshow("Image window", contours_img)
+    # cv2.waitKey(3)
 
 sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
 pub = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
@@ -56,6 +57,9 @@ def move(t, x):
 
     trans_vel += x[0]
     angular_vel += x[1]
+    trans_vel = max(min(trans_vel, 2), -2)
+    angular_vel = max(min(angular_vel, 2), -2)
+
 
     # send action
     neurocar_msg.linear.x = trans_vel
@@ -65,7 +69,7 @@ def move(t, x):
     # do action
     rate.sleep()
 
-    return x[0] * 10 + x[1] * 10
+    return trans_vel * 100 + angular_vel * 10
 
 
 class InputManager:
@@ -75,8 +79,8 @@ class InputManager:
     the data dimensionality is exactly the same as the previous data.
     """
 
-    def __init__(self, input_function, dimensions):
-        self.dimensions = dimensions
+    def __init__(self):
+        self.dimensions = 1
 
     def function(self, t):
         return np.array([1])
@@ -88,8 +92,9 @@ class NeuralNet:
     It will select one of a few actions and execute a given function.
     """
 
-    def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-4,
-                 learn_synapse=0.030, action_threshold=0.1, init_transform=[1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-5,
+                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 0, 0, 0, 0, 1, 0]):
+        global actions_list
         self.model = nengo.Network()
         self.input_manager = input_manager
         self.learning_active = learning_active
@@ -101,13 +106,15 @@ class NeuralNet:
         self.init_transform = init_transform
 
         with self.model:
-            # Set up the input
-            input_node = nengo.Node(self.input_manager.function, label="Input Node")
-
             # Set up the movement node
             movement = nengo.Ensemble(n_neurons=100, dimensions=2)
             movement_node = nengo.Node(act_function, size_in=2, label="reward")
             nengo.Connection(movement, movement_node)
+
+            # set up input stimulus
+            stim_node = nengo.Node(self.input_manager.function)
+            stim_ensemble = nengo.Ensemble(n_neurons=50, dimensions=self.input_manager.dimensions)
+            nengo.Connection(stim_node, stim_ensemble)
 
             # Create the action selection networks
             basal_ganglia = nengo.networks.actionselection.BasalGanglia(len(actions_list))
@@ -115,48 +122,39 @@ class NeuralNet:
             nengo.Connection(basal_ganglia.output, thalamus.input)
 
             # Convert the selection actions to act transforms
-
+            conn_actions = []
             for i, action in enumerate(actions_list):
+                conn_actions.append(nengo.Connection(stim_ensemble, basal_ganglia.input[i], function=lambda x: 0, learning_rule_type=nengo.PES()))
                 nengo.Connection(thalamus.output[i], movement, transform=action)
 
-            # Generate the training (error) signal
-            def error_func(t, x):
-                actions = np.array(x[:9])
-                utils = np.array(x[9:18])
-                r = x[19]
-                activate = x[20]
+            errors = nengo.networks.EnsembleArray(n_neurons=50, n_ensembles=len(actions_list))
+            nengo.Connection(movement_node, errors.input, transform=-np.ones((len(actions_list),1)))
+            for i in range(len(actions_list)):
+                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((50, 1)) * 4)
+            nengo.Connection(basal_ganglia.input, errors.input, transform=1)
+            for i in range(len(actions_list)):
+                nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
 
-                max_action = max(actions)
-                actions[actions < self.action_threshold] = 0
-                actions[actions != max_action] = 0
-                actions[actions == max_action] = 1
+            # nengo.Connection(thalamus.output, errors[:9])
+            # nengo.Connection(basal_ganglia.input, errors[9:18])
+            # nengo.Connection(movement_node, errors[19])
 
-                return activate * (
-                        np.multiply(actions, (utils - r) * (1 - r) ** 5)
-                        + np.multiply((1 - actions), (utils - 1) * (1 - r) ** 5)
-                )
+            # # Learning on the FPGA
+            # adaptive_ensemble = FpgaPesEnsembleNetwork(
+            #     self.board,
+            #     n_neurons=1000,
+            #     dimensions=input_mansagdsfsf.dimensions,
+            #     learning_rate=self.learn_rate,
+            #     function=lambda x: self.init_transform,
+            #     label="pes ensemble"
+            # )
+            # nengo.Connection(input_node, adaptive_ensemble.input, synapse=self.learn_synapse)
+            # nengo.Connection(errors, adaptive_ensemble.error)
+            # nengo.Connection(adaptive_ensemble.output, basal_ganglia.input)
 
-            errors = nengo.Node(error_func, size_in=21, size_out=9)
-            nengo.Connection(thalamus.output, errors[:9])
-            nengo.Connection(basal_ganglia.input, errors[9:18])
-            nengo.Connection(movement_node, errors[19])
 
-            # Learning on the FPGA
-            adaptive_ensemble = FpgaPesEnsembleNetwork(
-                self.board,
-                n_neurons=1000,
-                dimensions=self.input_manager.dimensions,
-                learning_rate=self.learn_rate,
-                function=lambda x: self.init_transform,
-                label="pes ensemble"
-            )
-
-            nengo.Connection(input_node, adaptive_ensemble.input, synapse=self.learn_synapse)
-            nengo.Connection(errors, adaptive_ensemble.error)
-            nengo.Connection(adaptive_ensemble.output, basal_ganglia.input)
-
-            learn_on = nengo.Node(self.learning_active)
-            nengo.Connection(learn_on, errors[20])
+            # learn_on = nengo.Node(self.learning_active)
+            # nengo.Connection(learn_on, errors[20])
 
         self.simulator = nengo_fpga.Simulator(self.model)
 
@@ -175,9 +173,9 @@ class NeuralNet:
 # print("Syntax correct.")
 def main():
     global width, height, img_arr
-    input_manager = InputManager(np.array([1]), 1)
+    input_manager = InputManager()
     network = NeuralNet(input_manager, move)
-    network.run_network(20)
+    network.run_network(60)
     network.close_simulator()
 
 
