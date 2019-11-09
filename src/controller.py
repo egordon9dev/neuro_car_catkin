@@ -113,8 +113,14 @@ class NeuralNet:
 
             # set up input stimulus
             stim_node = nengo.Node(self.input_manager.function)
-            stim_ensemble = nengo.Ensemble(n_neurons=50, dimensions=self.input_manager.dimensions)
-            nengo.Connection(stim_node, stim_ensemble)
+            # stim_ensemble = nengo.Ensemble(n_neurons=50, dimensions=self.input_manager.dimensions)
+            stim_ensemble_fpga = FpgaPesEnsembleNetwork(
+                self.board,
+                n_neurons=50,
+                dimensions=self.input_manager.dimensions,
+                learning_rate=self.learn_rate
+            )
+            nengo.Connection(stim_node, stim_ensemble_fpga.input)
 
             # Create the action selection networks
             basal_ganglia = nengo.networks.actionselection.BasalGanglia(len(actions_list))
@@ -122,9 +128,8 @@ class NeuralNet:
             nengo.Connection(basal_ganglia.output, thalamus.input)
 
             # Convert the selection actions to act transforms
-            conn_actions = []
             for i, action in enumerate(actions_list):
-                conn_actions.append(nengo.Connection(stim_ensemble, basal_ganglia.input[i], function=lambda x: 0, learning_rule_type=nengo.PES()))
+                nengo.Connection(stim_ensemble_fpga.output, basal_ganglia.input[i])
                 nengo.Connection(thalamus.output[i], movement, transform=action)
 
             errors = nengo.networks.EnsembleArray(n_neurons=50, n_ensembles=len(actions_list))
@@ -133,28 +138,7 @@ class NeuralNet:
                 nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((50, 1)) * 4)
             nengo.Connection(basal_ganglia.input, errors.input, transform=1)
             for i in range(len(actions_list)):
-                nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
-
-            # nengo.Connection(thalamus.output, errors[:9])
-            # nengo.Connection(basal_ganglia.input, errors[9:18])
-            # nengo.Connection(movement_node, errors[19])
-
-            # # Learning on the FPGA
-            # adaptive_ensemble = FpgaPesEnsembleNetwork(
-            #     self.board,
-            #     n_neurons=1000,
-            #     dimensions=input_mansagdsfsf.dimensions,
-            #     learning_rate=self.learn_rate,
-            #     function=lambda x: self.init_transform,
-            #     label="pes ensemble"
-            # )
-            # nengo.Connection(input_node, adaptive_ensemble.input, synapse=self.learn_synapse)
-            # nengo.Connection(errors, adaptive_ensemble.error)
-            # nengo.Connection(adaptive_ensemble.output, basal_ganglia.input)
-
-
-            # learn_on = nengo.Node(self.learning_active)
-            # nengo.Connection(learn_on, errors[20])
+                nengo.Connection(errors.ensembles[i], stim_ensemble_fpga.error)
 
         self.simulator = nengo_fpga.Simulator(self.model)
 
