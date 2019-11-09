@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
@@ -210,9 +210,11 @@ class InputManager:
     """
 
     def __init__(self, input_function, dimensions):
-        self.function = input_function
         self.dimensions = dimensions
 
+    def function(self, t):
+        global img_arr
+        return img_arr
 
 class NeuralNet:
     """
@@ -235,7 +237,7 @@ class NeuralNet:
 
         with self.model:
             # Set up the input
-            input_node = nengo.Node(self.input_manager.function)
+            input_node = nengo.Node(self.input_manager.function, label="Input Node")
 
             # Set up the movement node
             movement = nengo.Ensemble(n_neurons=100, dimensions=2)
@@ -307,7 +309,7 @@ class NeuralNet:
 
 # print("Syntax correct.")
 def main():
-    global width, height
+    global width, height, img_arr
     input_manager = InputManager(lambda t: img_arr, width * height)
     network = NeuralNet(input_manager, move)
     network.run_network(90)
