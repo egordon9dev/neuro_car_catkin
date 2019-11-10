@@ -51,8 +51,8 @@ def laser_callback(laser_scan):
 width = 1280
 height = 720
 
-shrink_width = 64
-shrink_height = 36
+shrink_width = 256
+shrink_height = 144
 
 angular_vel = 0
 trans_vel = 0
@@ -109,16 +109,31 @@ def move(t, x):
     global angular_vel, trans_vel, min_range
     global lasers, prev_lasers
 
-    prev_min_range = min_range
+    reward = 0
 
-    trans_vel += x[0]
-    angular_vel += x[1]
-    trans_vel = max(min(trans_vel, 2), -2)
-    angular_vel = max(min(angular_vel, 1), -1)
-    if min(lasers) < 0.5 or math.isinf(max(lasers)):
-        trans_vel = 0
+    max_speed = 20
+    max_angular = 1
 
+    trans_vel = x[0] * max_speed
+    angular_vel = x[1] * max_angular
+    angular_vel = max(min(angular_vel, max_angular), -max_angular)
+    trans_vel = max(min(trans_vel, max_speed), -max_speed)
+    min_laser = min(lasers)
+    max_laser = max(lasers)
+    if min_laser < 1:
+        if trans_vel > 0:
+            neurocar_msg.linear.x = 0
+            neurocar_msg.angular.z = 0
+            pub.publish(neurocar_msg)
+            return 0
+    else:
+        if trans_vel < 0:
+            neurocar_msg.linear.x = 0
+            neurocar_msg.angular.z = 0
+            pub.publish(neurocar_msg)
+            return 0
 
+    prev_min_laser = min_laser
     # send action
     neurocar_msg.linear.x = trans_vel
     neurocar_msg.angular.z = angular_vel
@@ -128,22 +143,21 @@ def move(t, x):
     # do action
     rate.sleep()
 
-    reward = 0
     # move away from obstacles
 
     # delta_lasers = np.absolute(np.subtract(lasers, prev_lasers))
-    max_laser = max(lasers)
-    if math.isfinite(max_laser):
-        reward += (max_laser-10) * 10
+    if math.isfinite(min_laser) and min_laser > 5 or min_laser > prev_min_laser:
+        reward += min_laser * 10
 
-    if min(lasers) > 1:
-        reward += 10
-        if min(prev_lasers) < 1:
-            reward += 100
 
-    reward += abs(real_twist.linear.x) * 1000
+    if min_laser > 2:
+        reward += (real_twist.linear.x ** 2) * 300
+    if min_laser > 3:
+        reward += (real_twist.linear.x ** 2) * 900
+    if min_laser > 5:
+        reward += (real_twist.linear.x ** 2) * 1500
 
-    log_msg.data = "reward: " + str(reward)
+    log_msg.data = "t: " + str(t) + " reward: " + str(reward) + "\nmax lsr: " + str(max(lasers)) + " min lsr: " + str(min(lasers)) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ")\n"
     return reward
 
 
@@ -230,7 +244,7 @@ class NeuralNet:
 def main():
     input_manager = InputManager()
     network = NeuralNet(input_manager, move)
-    network.run_network(60)
+    network.run_network(600)
     network.close_simulator()
 
 
