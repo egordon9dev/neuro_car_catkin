@@ -21,8 +21,8 @@ min_range = 10000
 min_range_angle = 0
 max_range = 0
 max_range_angle = 0
-lasers = 100 * np.ones(6)
-prev_lasers = 100 * np.ones(6)
+lasers = 100 * np.ones(3)
+prev_lasers = 100 * np.ones(3)
 
 
 def laser_callback(laser_scan):
@@ -34,7 +34,7 @@ def laser_callback(laser_scan):
     max_range_angle = 0
     prev_lasers = lasers
     if len(laser_scan.ranges) > 0:
-        lasers = laser_scan.ranges
+        lasers = [max(min(100, rng), 0) for rng in laser_scan.ranges]
         for i, rng in enumerate(laser_scan.ranges):
             avg_range += rng
             current_angle = laser_scan.angle_min + i * laser_scan.angle_increment
@@ -111,32 +111,38 @@ def move(t, x):
 
     reward = 0
 
-    max_speed = 20
-    max_angular = 1
+    max_speed = 10
+    max_angular = 0.05
 
-    trans_vel = x[0] * max_speed
+    trans_vel += x[0]
     angular_vel = x[1] * max_angular
     angular_vel = max(min(angular_vel, max_angular), -max_angular)
     trans_vel = max(min(trans_vel, max_speed), -max_speed)
     min_laser = min(lasers)
     max_laser = max(lasers)
-    if min_laser < 1:
-        if trans_vel > 0:
-            neurocar_msg.linear.x = 0
-            neurocar_msg.angular.z = 0
-            pub.publish(neurocar_msg)
-            return 0
-    else:
-        if trans_vel < 0:
-            neurocar_msg.linear.x = 0
-            neurocar_msg.angular.z = 0
-            pub.publish(neurocar_msg)
-            return 0
+    # if min_laser < 1:
+    #     if trans_vel > 0:
+    #         neurocar_msg.linear.x = 0
+    #         neurocar_msg.angular.z = 0
+    #         pub.publish(neurocar_msg)
+    #         return 0
+    # else:
+    #     if trans_vel < 0:
+    #         neurocar_msg.linear.x = 0
+    #         neurocar_msg.angular.z = 0
+    #         pub.publish(neurocar_msg)
+    #         return 0
+
+    # if lasers[0] > lasers[2]:
+    #     reward += 10 if angular_vel > 0 else 0
+    # else:
+    #     reward += 10 if angular_vel < 0 else 0
+
 
     prev_min_laser = min_laser
     # send action
     neurocar_msg.linear.x = trans_vel
-    neurocar_msg.angular.z = angular_vel
+    neurocar_msg.angular.z = 0 if real_twist.angular.z > 1 else angular_vel
     pub.publish(neurocar_msg)
     pub_log.publish(log_msg)
 
@@ -148,17 +154,20 @@ def move(t, x):
     # delta_lasers = np.absolute(np.subtract(lasers, prev_lasers))
     if math.isfinite(min_laser) and min_laser > 5 or min_laser > prev_min_laser:
         reward += min_laser * 10
-
-
+    #
+    #
     if min_laser > 2:
         reward += (real_twist.linear.x ** 2) * 300
     if min_laser > 3:
         reward += (real_twist.linear.x ** 2) * 900
     if min_laser > 5:
         reward += (real_twist.linear.x ** 2) * 1500
-
+    if abs(angular_vel) < 0.01:
+        reward += 3
+    #
     log_msg.data = "t: " + str(t) + " reward: " + str(reward) + "\nmax lsr: " + str(max(lasers)) + " min lsr: " + str(min(lasers)) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ")\n"
     return reward
+    # return abs(real_twist.linear.x)
 
 
 class InputManager:
@@ -169,12 +178,12 @@ class InputManager:
     """
 
     def __init__(self):
-        global shrink_width, shrink_height, lasers
-        self.dimensions = len(img_arr) #len(lasers)
+        global lasers
+        self.dimensions = len(lasers)
 
     def function(self, t):
-        global img_arr
-        return img_arr
+        global lasers
+        return lasers
 
 class NeuralNet:
     """
@@ -184,9 +193,9 @@ class NeuralNet:
     """
 
     def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-4,
-                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 1]):
+                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 0]):
         global actions_list
-        self.model = nengo.Network()
+        self.model = nengo.Network(seed=8)
         self.input_manager = input_manager
         self.learning_active = learning_active
         self.board = board
@@ -198,13 +207,13 @@ class NeuralNet:
 
         with self.model:
             # Set up the movement node
-            movement = nengo.Ensemble(n_neurons=100, dimensions=2)
+            movement = nengo.Ensemble(n_neurons=10, dimensions=2)
             movement_node = nengo.Node(act_function, size_in=2, label="reward")
             nengo.Connection(movement, movement_node)
 
             # set up input stimulus
             stim_node = nengo.Node(self.input_manager.function)
-            stim_ensemble = nengo.Ensemble(n_neurons=300, dimensions=self.input_manager.dimensions)
+            stim_ensemble = nengo.Ensemble(n_neurons=10, dimensions=self.input_manager.dimensions)
             nengo.Connection(stim_node, stim_ensemble)
 
             # Create the action selection networks
@@ -218,15 +227,15 @@ class NeuralNet:
                 conn_actions.append(nengo.Connection(stim_ensemble, basal_ganglia.input[i], function=lambda x: 0, learning_rule_type=nengo.PES()))
                 nengo.Connection(thalamus.output[i], movement, transform=action)
 
-            errors = nengo.networks.EnsembleArray(n_neurons=100, n_ensembles=len(actions_list))
+            errors = nengo.networks.EnsembleArray(n_neurons=10, n_ensembles=len(actions_list))
             nengo.Connection(movement_node, errors.input, transform=-np.ones((len(actions_list),1)))
             for i in range(len(actions_list)):
-                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((100, 1)) * 4)
+                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((10, 1)) * 4)
             nengo.Connection(basal_ganglia.input, errors.input, transform=1)
             for i in range(len(actions_list)):
                 nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
 
-        self.simulator = nengo_fpga.Simulator(self.model)
+        self.simulator = nengo.Simulator(self.model)
 
     def run_network(self, number_of_seconds):
         # with self.simulator:

@@ -42,13 +42,13 @@
         <wheelSeparation>0.5380</wheelSeparation>
         <wheelDiameter>0.2410</wheelDiameter>
 
-        <torque>1</torque>
+        <torque>0.1</torque>
         <commandTopic>cmd_vel</commandTopic>
 
         <!-- topic name published in the cpp file -->
         <odometryTopic>odom</odometryTopic>
-        <odometryFrame>neurocar</odometryFrame>
-        <robotBaseFrame>neurocar</robotBaseFrame>
+        <odometryFrame>base</odometryFrame>
+        <robotBaseFrame>base</robotBaseFrame>
 
         <publishWheelTF>true</publishWheelTF>
         <publishWheelJointState>true</publishWheelJointState>
@@ -124,10 +124,10 @@
               <ray>
                   <scan>
                   <horizontal>
-                    <samples>6</samples>
+                    <samples>3</samples>
                     <resolution>1.000000</resolution>
-                    <min_angle>-0.4</min_angle>
-                    <max_angle>0.4</max_angle>
+                    <min_angle>-0.8</min_angle>
+                    <max_angle>0.8</max_angle>
                   </horizontal>
                   </scan>
                   <range>
