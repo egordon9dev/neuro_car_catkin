@@ -4,6 +4,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from math import sin
@@ -15,6 +16,38 @@ from nengo_fpga.networks import FpgaPesEnsembleNetwork
 
 bridge = CvBridge()
 
+
+min_range = 10000
+min_range_angle = 0
+max_range = 0
+max_range_angle = 0
+lasers = 100 * np.ones(6)
+prev_lasers = 100 * np.ones(6)
+
+
+def laser_callback(laser_scan):
+    global min_range, min_range_angle, max_range, max_range_angle, lasers
+    avg_range = 0
+    min_range = 100000
+    min_range_angle = 0
+    max_range = 0
+    max_range_angle = 0
+    prev_lasers = lasers
+    if len(laser_scan.ranges) > 0:
+        lasers = laser_scan.ranges
+        for i, rng in enumerate(laser_scan.ranges):
+            avg_range += rng
+            current_angle = laser_scan.angle_min + i * laser_scan.angle_increment
+            if rng < min_range:
+                min_range = rng
+                min_range_angle = current_angle
+            if rng > max_range:
+                max_range = rng
+                max_range_angle = current_angle
+        avg_range /= len(laser_scan.ranges)
+    # log_string.data = "closest obstacle --- min " + str(min_range_angle) + " " + str(min_range) + " max " + str(max_range_angle) + " " + str(max_range)
+
+
 width = 1280
 height = 720
 
@@ -23,20 +56,20 @@ shrink_height = 36
 
 angular_vel = 0
 trans_vel = 0
-img_arr = None
+img_arr = np.ones(shrink_width*shrink_height)
 log_msg = String()
-
+real_twist = Twist()
 # acceleration: translational, rotational
 actions_list = [
-    [[-1], [-1]],
+    # [[-1], [-1]],
     [[-1], [0]],
-    [[-1], [1]],
+    # [[-1], [1]],
     [[0], [-1]],
-    [[0], [0]],
+    # [[0], [0]],
     [[0], [1]],
-    [[1], [-1]],
+    # [[1], [-1]],
     [[1], [0]],
-    [[1], [1]]
+    # [[1], [1]]
 ]
 
 
@@ -47,16 +80,25 @@ def callback(img):
     except CvBridgeError as e:
         print(e)
     cv_image = cv2.resize(cv_image, (shrink_width, shrink_height), interpolation=cv2.INTER_AREA)
-    edges_img = cv2.Canny(cv_image, 50, 250)
-    img_arr = np.asarray(edges_img).flatten().clip(0,1).astype(int)
+    # edges_img = cv2.Canny(cv_image, 50, 250)
+    hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+    lower = np.array([0,0,0])
+    upper = np.array([255,255,10])
+    thresh = cv2.inRange(hsv, lower, upper)
 
-    log_msg.data = str("len: " + str(len(img_arr)) + str(img_arr))
+    img_arr = np.asarray(thresh).flatten().clip(0,1).astype(int)
 
-    blown_up = cv2.resize(edges_img, (width, height), interpolation=cv2.INTER_AREA)
+    blown_up = cv2.resize(thresh, (width, height), interpolation=cv2.INTER_AREA)
     cv2.imshow("Image window", blown_up)
     cv2.waitKey(3)
 
+def odom_callback(odom):
+    global real_twist
+    real_twist = odom.twist.twist
+
 sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
+ray_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
+odom_sub = rospy.Subscriber('neurocar/odom', Odometry, odom_callback)
 pub_log = rospy.Publisher('neurocar/log', String, queue_size=10)
 pub = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
 rospy.init_node('controller', anonymous=True)
@@ -64,12 +106,17 @@ rate = rospy.Rate(60)  # 10hz
 neurocar_msg = Twist()
 
 def move(t, x):
-    global angular_vel, trans_vel
+    global angular_vel, trans_vel, min_range
+    global lasers, prev_lasers
+
+    prev_min_range = min_range
 
     trans_vel += x[0]
     angular_vel += x[1]
     trans_vel = max(min(trans_vel, 2), -2)
-    angular_vel = max(min(angular_vel, 2), -2)
+    angular_vel = max(min(angular_vel, 1), -1)
+    if min(lasers) < 0.5 or math.isinf(max(lasers)):
+        trans_vel = 0
 
 
     # send action
@@ -77,10 +124,27 @@ def move(t, x):
     neurocar_msg.angular.z = angular_vel
     pub.publish(neurocar_msg)
     pub_log.publish(log_msg)
+
     # do action
     rate.sleep()
 
-    return trans_vel * 100 + angular_vel * 10
+    reward = 0
+    # move away from obstacles
+
+    # delta_lasers = np.absolute(np.subtract(lasers, prev_lasers))
+    max_laser = max(lasers)
+    if math.isfinite(max_laser):
+        reward += (max_laser-10) * 10
+
+    if min(lasers) > 1:
+        reward += 10
+        if min(prev_lasers) < 1:
+            reward += 100
+
+    reward += abs(real_twist.linear.x) * 1000
+
+    log_msg.data = "reward: " + str(reward)
+    return reward
 
 
 class InputManager:
@@ -91,12 +155,12 @@ class InputManager:
     """
 
     def __init__(self):
-        global shrink_width, shrink_height
-        self.dimensions = shrink_width*shrink_height
+        global shrink_width, shrink_height, lasers
+        self.dimensions = len(img_arr) #len(lasers)
 
     def function(self, t):
         global img_arr
-        return np.ones(self.dimensions)
+        return img_arr
 
 class NeuralNet:
     """
@@ -105,8 +169,8 @@ class NeuralNet:
     It will select one of a few actions and execute a given function.
     """
 
-    def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-5,
-                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 0, 0, 0, 0, 1, 0]):
+    def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-4,
+                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 1]):
         global actions_list
         self.model = nengo.Network()
         self.input_manager = input_manager
@@ -126,7 +190,7 @@ class NeuralNet:
 
             # set up input stimulus
             stim_node = nengo.Node(self.input_manager.function)
-            stim_ensemble = nengo.Ensemble(n_neurons=50, dimensions=self.input_manager.dimensions)
+            stim_ensemble = nengo.Ensemble(n_neurons=300, dimensions=self.input_manager.dimensions)
             nengo.Connection(stim_node, stim_ensemble)
 
             # Create the action selection networks
@@ -140,10 +204,10 @@ class NeuralNet:
                 conn_actions.append(nengo.Connection(stim_ensemble, basal_ganglia.input[i], function=lambda x: 0, learning_rule_type=nengo.PES()))
                 nengo.Connection(thalamus.output[i], movement, transform=action)
 
-            errors = nengo.networks.EnsembleArray(n_neurons=50, n_ensembles=len(actions_list))
+            errors = nengo.networks.EnsembleArray(n_neurons=100, n_ensembles=len(actions_list))
             nengo.Connection(movement_node, errors.input, transform=-np.ones((len(actions_list),1)))
             for i in range(len(actions_list)):
-                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((50, 1)) * 4)
+                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((100, 1)) * 4)
             nengo.Connection(basal_ganglia.input, errors.input, transform=1)
             for i in range(len(actions_list)):
                 nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
@@ -175,3 +239,41 @@ if __name__ == '__main__':
         main()
     except rospy.ROSInterruptException:
         pass
+
+
+
+"""
+To run:
+
+cd ~/catkin_ws/src
+catkin_make -C ~/catkin_ws
+source ~/catkin_ws/devel/setup.bash
+source /usr/share/gazebo/setup.sh
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/catkin_ws/src
+export ROS_PYTHON_VERSION=3
+
+cd ~/catkin_ws/src
+source /opt/ros/melodic/setup.bash
+catkin_make -C ~/catkin_ws
+source ~/catkin_ws/devel/setup.bash
+source /opt/ros/melodic/setup.bash
+source /usr/share/gazebo/setup.sh
+
+
+
+source /opt/ros/melodic/setup.bash
+source ~/catkin_build_ws/install/setup.bash
+
+
+
+source /opt/ros/melodic/setup.bash
+source ~/catkin_build_ws/install/setup.bash --extend
+source /opt/ros/melodic/setup.bash
+source /usr/share/gazebo/setup.sh
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/catkin_ws/src
+
+
+source ~/catkin_build_ws/install/setup.bash --extend
+source /usr/share/gazebo/setup.sh
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/catkin_ws/src
+"""

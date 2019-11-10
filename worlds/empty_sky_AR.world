@@ -42,20 +42,20 @@
         <wheelSeparation>0.5380</wheelSeparation>
         <wheelDiameter>0.2410</wheelDiameter>
 
-        <torque>20</torque>
+        <torque>1</torque>
         <commandTopic>cmd_vel</commandTopic>
 
         <!-- topic name published in the cpp file -->
         <odometryTopic>odom</odometryTopic>
-        <odometryFrame>odom</odometryFrame>
-        <robotBaseFrame>base</robotBaseFrame>
+        <odometryFrame>neurocar</odometryFrame>
+        <robotBaseFrame>neurocar</robotBaseFrame>
 
         <publishWheelTF>true</publishWheelTF>
         <publishWheelJointState>true</publishWheelJointState>
       </plugin>
       <model name="cam">
         <model name="camera">
-          <pose>0 0 0.4 0 0 0</pose>
+          <pose>0 0 0.1 0 0 0</pose>
           <link name="link">
             <inertial>
               <mass>0.1</mass>
@@ -117,17 +117,17 @@
             </sensor>
           </link>
           <link name="laser_link">
-            <pose>0 0 -.4 0 0 0</pose>
+            <pose>0 0 -.1 0 0 0</pose>
             <sensor name="laser" type="ray">
               <always_on>1</always_on>
               <visualize>true</visualize>
               <ray>
                   <scan>
                   <horizontal>
-                    <samples>180</samples>
+                    <samples>6</samples>
                     <resolution>1.000000</resolution>
-                    <min_angle>-1.57</min_angle>
-                    <max_angle>1.57</max_angle>
+                    <min_angle>-0.6</min_angle>
+                    <max_angle>0.6</max_angle>
                   </horizontal>
                   </scan>
                   <range>
@@ -170,7 +170,7 @@
           </limit>
         </axis>
       </joint>
-      <pose>-10 10 0 0 0 0.7</pose>
+      <pose>-5 3 0 0 0 0.7</pose>
     </model>
   </world>
 </sdf>
