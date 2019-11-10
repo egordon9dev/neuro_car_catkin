@@ -96,7 +96,7 @@ def odom_callback(odom):
     global real_twist
     real_twist = odom.twist.twist
 
-sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
+# sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
 ray_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
 odom_sub = rospy.Subscriber('neurocar/odom', Odometry, odom_callback)
 pub_log = rospy.Publisher('neurocar/log', String, queue_size=10)
@@ -105,53 +105,51 @@ rospy.init_node('controller', anonymous=True)
 rate = rospy.Rate(60)  # 10hz
 neurocar_msg = Twist()
 
+last_log = 0
 def move(t, x):
     global angular_vel, trans_vel, min_range
-    global lasers, prev_lasers
-
+    global lasers, prev_lasers, last_log
     reward = 0
-
-    max_speed = 10
-    max_angular = 0.05
-
-    trans_vel += x[0]
-    angular_vel = x[1] * max_angular
-    angular_vel = max(min(angular_vel, max_angular), -max_angular)
-    trans_vel = max(min(trans_vel, max_speed), -max_speed)
+    #
+    # max_speed = 10
+    # max_angular = 0.05
+    #
+    trans_vel = x[0] * 50
+    angular_vel = x[1] * 0.01
+    # angular_vel = max(min(angular_vel, max_angular), -max_angular)
+    # trans_vel = max(min(trans_vel, max_speed), -max_speed)
     min_laser = min(lasers)
     max_laser = max(lasers)
-    # if min_laser < 1:
-    #     if trans_vel > 0:
-    #         neurocar_msg.linear.x = 0
-    #         neurocar_msg.angular.z = 0
-    #         pub.publish(neurocar_msg)
-    #         return 0
-    # else:
-    #     if trans_vel < 0:
-    #         neurocar_msg.linear.x = 0
-    #         neurocar_msg.angular.z = 0
-    #         pub.publish(neurocar_msg)
-    #         return 0
-
-    # if lasers[0] > lasers[2]:
-    #     reward += 10 if angular_vel > 0 else 0
-    # else:
-    #     reward += 10 if angular_vel < 0 else 0
-
+    if min_laser < 1:
+        if trans_vel > 0:
+            neurocar_msg.linear.x = 0
+            neurocar_msg.angular.z = 0
+            pub.publish(neurocar_msg)
+            return 0
+    else:
+        if trans_vel < 0:
+            neurocar_msg.linear.x = 0
+            neurocar_msg.angular.z = 0
+            pub.publish(neurocar_msg)
+            return 0
 
     prev_min_laser = min_laser
+    prev_mid_laser = lasers[1]
     # send action
-    neurocar_msg.linear.x = trans_vel
-    neurocar_msg.angular.z = 0 if real_twist.angular.z > 1 else angular_vel
+    neurocar_msg.linear.x = max(min(neurocar_msg.linear.x + trans_vel, 5), -5)
+    neurocar_msg.angular.z = angular_vel
+    # neurocar_msg.angular.z = 0 if real_twist.angular.z > 1 else angular_vel
     pub.publish(neurocar_msg)
-    pub_log.publish(log_msg)
+    if t-last_log > 0.3:
+        pub_log.publish(log_msg)
+        last_log = t
 
     # do action
     rate.sleep()
 
     # move away from obstacles
 
-    # delta_lasers = np.absolute(np.subtract(lasers, prev_lasers))
+    delta_lasers = np.absolute(np.subtract(lasers, prev_lasers))
     if math.isfinite(min_laser) and min_laser > 5 or min_laser > prev_min_laser:
         reward += min_laser * 10
     #
@@ -164,10 +162,14 @@ def move(t, x):
         reward += (real_twist.linear.x ** 2) * 1500
     if abs(angular_vel) < 0.01:
         reward += 3
+    if real_twist.linear.x >= 0:
+        if lasers[1] > prev_mid_laser:
+            reward += 100
+    if lasers[1] > 4:
+        reward += 300 + real_twist.linear.x * 100
     #
     log_msg.data = "t: " + str(t) + " reward: " + str(reward) + "\nmax lsr: " + str(max(lasers)) + " min lsr: " + str(min(lasers)) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ")\n"
     return reward
-    # return abs(real_twist.linear.x)
 
 
 class InputManager:
@@ -193,8 +195,8 @@ class NeuralNet:
     """
 
     def __init__(self, input_manager, act_function, learning_active=1, board="pynq", learn_rate=1e-4,
-                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 0]):
-        global actions_list
+                 learn_synapse=0.030, action_threshold=0.1, init_transform=[0, 0, 0, 1]):
+        global actions_list, lasers
         self.model = nengo.Network(seed=8)
         self.input_manager = input_manager
         self.learning_active = learning_active
@@ -206,34 +208,46 @@ class NeuralNet:
         self.init_transform = init_transform
 
         with self.model:
-            # Set up the movement node
-            movement = nengo.Ensemble(n_neurons=10, dimensions=2)
-            movement_node = nengo.Node(act_function, size_in=2, label="reward")
+            movement = nengo.Ensemble(n_neurons=100, dimensions=2, radius=1.4)
+
+            movement_node = nengo.Node(move, size_in=2, label='reward')
             nengo.Connection(movement, movement_node)
 
-            # set up input stimulus
-            stim_node = nengo.Node(self.input_manager.function)
-            stim_ensemble = nengo.Ensemble(n_neurons=10, dimensions=self.input_manager.dimensions)
-            nengo.Connection(stim_node, stim_ensemble)
+            radar = nengo.Ensemble(n_neurons=50, dimensions=3, radius=4)
+            stim_radar = nengo.Node(lambda t: lasers)
+            nengo.Connection(stim_radar, radar)
 
-            # Create the action selection networks
-            basal_ganglia = nengo.networks.actionselection.BasalGanglia(len(actions_list))
-            thalamus = nengo.networks.actionselection.Thalamus(len(actions_list))
-            nengo.Connection(basal_ganglia.output, thalamus.input)
+            bg = nengo.networks.actionselection.BasalGanglia(3)
+            thal = nengo.networks.actionselection.Thalamus(3)
+            nengo.Connection(bg.output, thal.input)
 
-            # Convert the selection actions to act transforms
-            conn_actions = []
-            for i, action in enumerate(actions_list):
-                conn_actions.append(nengo.Connection(stim_ensemble, basal_ganglia.input[i], function=lambda x: 0, learning_rule_type=nengo.PES()))
-                nengo.Connection(thalamus.output[i], movement, transform=action)
+            def u_fwd(x):
+                return 0.8
 
-            errors = nengo.networks.EnsembleArray(n_neurons=10, n_ensembles=len(actions_list))
-            nengo.Connection(movement_node, errors.input, transform=-np.ones((len(actions_list),1)))
-            for i in range(len(actions_list)):
-                nengo.Connection(basal_ganglia.output[i], errors.ensembles[i].neurons, transform=np.ones((10, 1)) * 4)
-            nengo.Connection(basal_ganglia.input, errors.input, transform=1)
-            for i in range(len(actions_list)):
-                nengo.Connection(errors.ensembles[i], conn_actions[i].learning_rule)
+            def u_left(x):
+                return 0.6
+
+            def u_right(x):
+                return 0.7
+
+            conn_fwd = nengo.Connection(radar, bg.input[0], function=u_fwd, learning_rule_type=nengo.PES())
+            conn_left = nengo.Connection(radar, bg.input[1], function=u_left, learning_rule_type=nengo.PES())
+            conn_right = nengo.Connection(radar, bg.input[2], function=u_right, learning_rule_type=nengo.PES())
+
+            nengo.Connection(thal.output[0], movement, transform=[[1], [0]])
+            nengo.Connection(thal.output[1], movement, transform=[[0], [1]])
+            nengo.Connection(thal.output[2], movement, transform=[[0], [-1]])
+
+            errors = nengo.networks.EnsembleArray(n_neurons=50, n_ensembles=3)
+            nengo.Connection(movement_node, errors.input, transform=-np.ones((3, 1)))
+            nengo.Connection(bg.output[0], errors.ensembles[0].neurons, transform=np.ones((50, 1)) * 4)
+            nengo.Connection(bg.output[1], errors.ensembles[1].neurons, transform=np.ones((50, 1)) * 4)
+            nengo.Connection(bg.output[2], errors.ensembles[2].neurons, transform=np.ones((50, 1)) * 4)
+            nengo.Connection(bg.input, errors.input, transform=1)
+
+            nengo.Connection(errors.ensembles[0], conn_fwd.learning_rule)
+            nengo.Connection(errors.ensembles[1], conn_left.learning_rule)
+            nengo.Connection(errors.ensembles[2], conn_right.learning_rule)
 
         self.simulator = nengo.Simulator(self.model)
 
