@@ -11,9 +11,6 @@ from math import sin
 import numpy as np
 import math
 import nengo
-import nengo_fpga
-from nengo_fpga.networks import FpgaPesEnsembleNetwork
-
 bridge = CvBridge()
 
 
@@ -111,13 +108,13 @@ def move(t, x):
     global lasers, prev_lasers, last_log
     reward = 0
     #
-    # max_speed = 10
-    # max_angular = 0.05
+    max_speed = 2
+    max_angular = 0.5
     #
-    trans_vel = x[0] * 50
-    angular_vel = x[1] * 0.01
-    # angular_vel = max(min(angular_vel, max_angular), -max_angular)
-    # trans_vel = max(min(trans_vel, max_speed), -max_speed)
+    trans_vel += x[0] * 4
+    angular_vel += x[1]
+    angular_vel = max(min(angular_vel, max_angular), -max_angular)
+    trans_vel = max(min(trans_vel, max_speed), -max_speed)
     min_laser = min(lasers)
     max_laser = max(lasers)
     if min_laser < 1:
@@ -126,17 +123,17 @@ def move(t, x):
             neurocar_msg.angular.z = 0
             pub.publish(neurocar_msg)
             return 0
-    else:
-        if trans_vel < 0:
-            neurocar_msg.linear.x = 0
-            neurocar_msg.angular.z = 0
-            pub.publish(neurocar_msg)
-            return 0
+    #else:
+    #    if trans_vel < 0:
+    #        neurocar_msg.linear.x = 0
+    #        neurocar_msg.angular.z = 0
+    #        pub.publish(neurocar_msg)
+    #        return 0
 
     prev_min_laser = min_laser
     prev_mid_laser = lasers[1]
     # send action
-    neurocar_msg.linear.x = max(min(neurocar_msg.linear.x + trans_vel, 5), -5)
+    neurocar_msg.linear.x = trans_vel # max(min(neurocar_msg.linear.x + trans_vel, 5), -5)
     neurocar_msg.angular.z = angular_vel
     # neurocar_msg.angular.z = 0 if real_twist.angular.z > 1 else angular_vel
     pub.publish(neurocar_msg)
@@ -155,18 +152,18 @@ def move(t, x):
     #
     #
     if min_laser > 2:
-        reward += (real_twist.linear.x ** 2) * 300
+        reward += (real_twist.linear.x ** 2) * 30
     if min_laser > 3:
-        reward += (real_twist.linear.x ** 2) * 900
+        reward += (real_twist.linear.x ** 2) * 90
     if min_laser > 5:
-        reward += (real_twist.linear.x ** 2) * 1500
+        reward += (real_twist.linear.x ** 2) * 150
     if abs(angular_vel) < 0.01:
         reward += 3
     if real_twist.linear.x >= 0:
         if lasers[1] > prev_mid_laser:
-            reward += 100
-    if lasers[1] > 4:
-        reward += 300 + real_twist.linear.x * 100
+            reward += 20
+    #if lasers[1] > 4:
+    #    reward += 300 + real_twist.linear.x * 100
     #
     log_msg.data = "t: " + str(t) + " reward: " + str(reward) + "\nmax lsr: " + str(max(lasers)) + " min lsr: " + str(min(lasers)) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ")\n"
     return reward
