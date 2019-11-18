@@ -264,7 +264,7 @@ class NeuralNet:
 def main():
     input_manager = InputManager()
     network = NeuralNet(input_manager, move)
-    network.run_network(600)
+    network.run_network(60 * 60 * 24)  #24 hours
     network.close_simulator()
 
 
