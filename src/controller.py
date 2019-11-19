@@ -42,6 +42,31 @@ def laser_callback(laser_scan):
                 max_range = rng
                 max_range_angle = current_angle
         avg_range /= len(laser_scan.ranges)
+
+    log_msg.data = "Laser: (%.2f, %.2f)" % (max_range, max_range_angle)
+    trans_vel = 2
+    if max_range_angle < 0:
+        #turn right
+        angular_vel = 1.5
+        log_msg.data += " Action: Right"
+    elif max_range_angle > 0:
+        #turn left
+        angular_vel = -1.5
+        log_msg.data += " Action: Left"
+    else:
+        trans_vel = 4
+        if min_range_angle < 0:
+            # turn left
+            angular_vel = -0.2
+        else:
+            #turn right
+            angular_vel = 0.2
+
+    neurocar_msg.linear.x = trans_vel
+    neurocar_msg.angular.z = angular_vel
+    pub.publish(neurocar_msg)
+    pub_log.publish(log_msg)
+
     # log_string.data = "closest obstacle --- min " + str(min_range_angle) + " " + str(min_range) + " max " + str(max_range_angle) + " " + str(max_range)
 
 
@@ -259,13 +284,12 @@ class NeuralNet:
     def close_simulator(self):
         self.simulator.close()
 
-
+PI = math.pi
 # print("Syntax correct.")
 def main():
-    input_manager = InputManager()
-    network = NeuralNet(input_manager, move)
-    network.run_network(60 * 60 * 24)  #24 hours
-    network.close_simulator()
+    trans_vel = 5
+    rospy.spin()
+
 
 
 if __name__ == '__main__':
