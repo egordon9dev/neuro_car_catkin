@@ -11,6 +11,8 @@ from math import sin
 import numpy as np
 import math
 import nengo
+import pickle
+import time
 bridge = CvBridge()
 
 
@@ -20,7 +22,8 @@ max_range = 0
 max_range_angle = 0
 lasers = 100 * np.ones(3)
 prev_lasers = 100 * np.ones(3)
-
+start_time = 0
+training_data = []
 
 def laser_callback(laser_scan):
     global min_range, min_range_angle, max_range, max_range_angle, lasers
@@ -66,12 +69,17 @@ def laser_callback(laser_scan):
     neurocar_msg.angular.z = angular_vel
     pub.publish(neurocar_msg)
     pub_log.publish(log_msg)
-
+    training_data.append((img_arr, (trans_vel, angular_vel)))
+    if time.time() - start_time > 90:
+        with open("/home/ethan/catkin_ws/src/neurocar/src/training_data", "wb") as data_file:
+                pickle.dump(training_data, data_file)
+        pub_log.publish("Training data written to disk")
+        rospy.signal_shutdown("Training Finished")
     # log_string.data = "closest obstacle --- min " + str(min_range_angle) + " " + str(min_range) + " max " + str(max_range_angle) + " " + str(max_range)
 
 
-width = 1280
-height = 720
+width = 128
+height = 72
 
 shrink_width = 256
 shrink_height = 144
@@ -118,7 +126,7 @@ def odom_callback(odom):
     global real_twist
     real_twist = odom.twist.twist
 
-# sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
+sub = rospy.Subscriber('neurocar/camera/image_raw', Image, callback)
 ray_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
 odom_sub = rospy.Subscriber('neurocar/odom', Odometry, odom_callback)
 pub_log = rospy.Publisher('neurocar/log', String, queue_size=10)
@@ -286,8 +294,10 @@ class NeuralNet:
 
 PI = math.pi
 # print("Syntax correct.")
+
 def main():
-    trans_vel = 5
+    global start_time
+    start_time = time.time()
     rospy.spin()
 
 
