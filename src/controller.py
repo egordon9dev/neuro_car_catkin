@@ -24,9 +24,13 @@ lasers = 100 * np.ones(3)
 prev_lasers = 100 * np.ones(3)
 start_time = 0
 training_data = []
+training_duration = 60
 
+left_rng = 0
+right_rng = 0
 def laser_callback(laser_scan):
-    global min_range, min_range_angle, max_range, max_range_angle, lasers
+    global training_duration, start_time, min_range, min_range_angle, max_range, max_range_angle, lasers
+    global left_rng, right_rng
     avg_range = 0
     min_range = 100000
     min_range_angle = 0
@@ -34,6 +38,8 @@ def laser_callback(laser_scan):
     max_range_angle = 0
     prev_lasers = lasers
     if len(laser_scan.ranges) > 0:
+        left_rng = laser_scan.ranges[0]
+        right_rng = laser_scan.ranges[len(laser_scan.ranges)-1]
         lasers = [max(min(100, rng), 0) for rng in laser_scan.ranges]
         for i, rng in enumerate(laser_scan.ranges):
             avg_range += rng
@@ -69,8 +75,9 @@ def laser_callback(laser_scan):
     neurocar_msg.angular.z = angular_vel
     pub.publish(neurocar_msg)
     pub_log.publish(log_msg)
-    training_data.append((img_arr, (trans_vel, angular_vel)))
-    if time.time() - start_time > 90:
+    if time.time() - start_time > 10:
+        training_data.append(((img_arr, left_rng, right_rng), (trans_vel, angular_vel)))
+    if time.time() - start_time > training_duration:
         with open("/home/ethan/catkin_ws/src/neurocar/src/training_data", "wb") as data_file:
                 pickle.dump(training_data, data_file)
         pub_log.publish("Training data written to disk")
@@ -78,11 +85,11 @@ def laser_callback(laser_scan):
     # log_string.data = "closest obstacle --- min " + str(min_range_angle) + " " + str(min_range) + " max " + str(max_range_angle) + " " + str(max_range)
 
 
-width = 128
-height = 72
+width = 640
+height = 360
 
-shrink_width = 256
-shrink_height = 144
+shrink_width = 128
+shrink_height = 72
 
 angular_vel = 0
 trans_vel = 0
