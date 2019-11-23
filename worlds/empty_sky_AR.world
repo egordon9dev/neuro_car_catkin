@@ -138,11 +138,11 @@
               </ray>
               <plugin name='laser_controller' filename='libgazebo_ros_laser.so'>
                   <alwaysOn>true</alwaysOn>
-                  <updateRate>30.0</updateRate>
+                  <updateRate>60</updateRate>
                   <topicName>/neurocar/laser/scan</topicName>
                   <frameName>laser_link</frameName>
               </plugin>
-              <update_rate>20</update_rate>
+              <update_rate>60</update_rate>
             </sensor>
           </link>
         </model>

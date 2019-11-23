@@ -1,8 +1,6 @@
 import pickle
+import msgpack
 
-with open("td", "rb") as f:
-    data = pickle.load(f)
-    print(data[0])
-    for i in data[0][0][0]:
-        print(i, end=" ")
-    print("")
+with open("training_data", "rb") as f:
+    data = msgpack.unpack(f)
+    print("Found " + str(len(data)) + " data frames")
