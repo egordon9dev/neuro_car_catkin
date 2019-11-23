@@ -1,0 +1,5 @@
+cd ..
+source ~/catkin_build_ws/install/setup.bash --extend
+source /usr/share/gazebo/setup.sh
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/catkin_ws/src
+roslaunch neurocar create_world.launch
