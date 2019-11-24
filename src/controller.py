@@ -69,12 +69,14 @@ neurocar_msg = Twist()
 
 last_log = 0
 fail_load_weights = False
+its = 0
 def move(t, x):
-    global last_log, fail_load_weights
+    global last_log, fail_load_weights, its
 
     max_speed = 2
     max_angular = 0.5
 
+    its += 1
     action = upscale_action(x)
     trans_vel = action[0]
     angular_vel = action[1]
@@ -93,7 +95,7 @@ def move(t, x):
     rate.sleep()
 
 
-    log_msg.data = "Failed to Load Weights" if fail_load_weights else "t: " + str(t) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ")\n"
+    log_msg.data = "Failed to Load Weights" if fail_load_weights else "t: " + str(t) + " vel: (" + str(real_twist.linear.x) + ", " + str(real_twist.angular.z) + ") %d "%(its)
     return x
 
 def get_next_data(t):
@@ -107,10 +109,10 @@ class Explicit(nengo.solvers.Solver):
             
     def __call__(self, A, Y, rng=None, E=None):
         return self.value, {}
-n_stim_neurons = 100
+n_stim_neurons = 8000
 model = nengo.Network(seed=8)
 with model:
-    movement = nengo.Ensemble(n_neurons=100, dimensions=2)
+    movement = nengo.Ensemble(n_neurons=8000, dimensions=2)
 
     movement_node = nengo.Node(move, size_in=2, size_out=2, label='Movement')
     nengo.Connection(movement, movement_node)
