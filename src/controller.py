@@ -73,8 +73,8 @@ its = 0
 def move(t, x):
     global last_log, fail_load_weights, its
 
-    max_speed = 2
-    max_angular = 0.5
+    max_speed = 4.4
+    max_angular = 2.2
 
     its += 1
     action = upscale_action(x)
@@ -131,8 +131,8 @@ with model:
         weights_rot = np.zeros((n_stim_neurons, 1))
         fail_load_weights = True
 
-    conn_trans = nengo.Connection(stim_ensemble, movement, function=lambda x: 0.7, transform=[[1], [0]], solver = Explicit(weights_trans))
-    conn_rot = nengo.Connection(stim_ensemble, movement, function=lambda x: 0, transform=[[0], [1]], solver = Explicit(weights_rot))
+    conn_trans = nengo.Connection(stim_ensemble, movement, transform=[[1], [0]], solver = Explicit(weights_trans))
+    conn_rot = nengo.Connection(stim_ensemble, movement, transform=[[0], [1]], solver = Explicit(weights_rot))
 
 simulator = nengo.Simulator(model)
 simulator.run(30)
