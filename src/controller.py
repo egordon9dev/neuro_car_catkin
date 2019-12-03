@@ -131,8 +131,8 @@ with model:
         weights_rot = np.zeros((n_stim_neurons, 1))
         fail_load_weights = True
 
-    conn_trans = nengo.Connection(stim_ensemble, movement, transform=[[1], [0]], solver = Explicit(weights_trans))
-    conn_rot = nengo.Connection(stim_ensemble, movement, transform=[[0], [1]], solver = Explicit(weights_rot))
+    conn_trans = nengo.Connection(stim_ensemble, movement, function= lambda x: 0, transform=[[1], [0]], solver = Explicit(weights_trans))
+    conn_rot = nengo.Connection(stim_ensemble, movement, function= lambda x: 0, transform=[[0], [1]], solver = Explicit(weights_rot))
 
 simulator = nengo.Simulator(model)
 simulator.run(30)
