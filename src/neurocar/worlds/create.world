@@ -1,32 +1,13 @@
-<?xml version="1.0" ?>
-<sdf version="1.6">
+<sdf version="1.5">
   <world name="default">
-    <scene>
-      <sky>
-        <clouds>
-          <speed>12</speed>
-        </clouds>
-      </sky>
-      <ambient>1.0 1.0 1.0 1.0</ambient>
-      <shadows>true</shadows>
-    </scene>
-
-    <!-- A global light source -->
     <include>
-      <uri>model://urdf/models/sun</uri>
+      <uri>model://sun</uri>
     </include>
     <include>
-      <name>track</name>
-      <uri>model://urdf/models/track</uri>
-      <pose>0 0 0.0762 0 0 0.785398</pose>
-    </include>
-    <!-- A ground plane -->
-    <include>
-      <name>blended_plane</name>
-      <uri>model://urdf/models/blended_track</uri>
-      <pose>0 0 0 0 0 0.785398</pose>
+      <uri>model://ground_plane</uri>
     </include>
 
+    <!-- Name it uniquely to not conflict with <include>'d model  -->
     <model name="neurocar">
       <include>
 	      <uri>model://create</uri>
@@ -39,10 +20,10 @@
         <leftJoint>create::right_wheel</leftJoint>
         <rightJoint>create::left_wheel</rightJoint>
 
-        <wheelSeparation>0.5380</wheelSeparation>
+        <wheelSeparation>5</wheelSeparation>
         <wheelDiameter>0.2410</wheelDiameter>
 
-        <torque>20</torque>
+        <torque>0.1</torque>
         <commandTopic>cmd_vel</commandTopic>
 
         <!-- topic name published in the cpp file -->
@@ -55,7 +36,7 @@
       </plugin>
       <model name="cam">
         <model name="camera">
-          <pose>0 0 0.4 0 0 0</pose>
+          <pose>0 0 0.05 0 0 0</pose>
           <link name="link">
             <inertial>
               <mass>0.1</mass>
@@ -81,10 +62,10 @@
             </visual>
             <sensor name="camera" type="camera">
               <camera>
-                <horizontal_fov>2.0</horizontal_fov>
+                <horizontal_fov>1.047</horizontal_fov>
                 <image>
-                  <width>1280</width>
-                  <height>720</height>
+                  <width>160</width>
+                  <height>120</height>
                 </image>
                 <clip>
                   <near>0.1</near>
@@ -93,10 +74,7 @@
                 <!--<save enabled="true">
                   <path>~/Documents/rg/neuro_car_imgs/cam1</path>
                 </save>-->
-                <lens>
-                  <type>stereographic</type>
-                  <scale_to_hfov>true</scale_to_hfov>
-                </lens>
+                <update_rate>20</update_rate>
               </camera>
               <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
                 <alwaysOn>true</alwaysOn>
@@ -116,35 +94,6 @@
               <visualize>true</visualize>
             </sensor>
           </link>
-          <link name="laser_link">
-            <pose>0 0 -.4 0 0 0</pose>
-            <sensor name="laser" type="ray">
-              <always_on>1</always_on>
-              <visualize>true</visualize>
-              <ray>
-                  <scan>
-                  <horizontal>
-                    <samples>180</samples>
-                    <resolution>1.000000</resolution>
-                    <min_angle>-1.57</min_angle>
-                    <max_angle>1.57</max_angle>
-                  </horizontal>
-                  </scan>
-                  <range>
-                  <min>0.080000</min>
-                  <max>300</max>
-                  <resolution>0.010000</resolution>
-                  </range>
-              </ray>
-              <plugin name='laser_controller' filename='libgazebo_ros_laser.so'>
-                  <alwaysOn>true</alwaysOn>
-                  <updateRate>30.0</updateRate>
-                  <topicName>/neurocar/laser/scan</topicName>
-                  <frameName>laser_link</frameName>
-              </plugin>
-              <update_rate>20</update_rate>
-            </sensor>
-          </link>
         </model>
         <pose>0.1 0 0.1 0 0 0</pose>
       </model>
@@ -159,18 +108,6 @@
           </limit>
         </axis>
       </joint>
-      <joint name="laser_joint" type="revolute">
-        <parent>neurocar::create::base</parent>
-        <child>neurocar::cam::camera::laser_link</child>
-        <axis>
-          <xyz>0 0 1</xyz>
-          <limit>
-            <lower>0</lower>
-            <upper>0</upper>
-          </limit>
-        </axis>
-      </joint>
-      <pose>-5 3 0 0 0 0.7</pose>
     </model>
   </world>
 </sdf>
