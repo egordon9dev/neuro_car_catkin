@@ -1,0 +1,105 @@
+[roslaunch][INFO] 2020-10-13 20:17:00,794: Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[roslaunch][INFO] 2020-10-13 20:17:00,796: Done checking log file disk usage. Usage is <1GB.
+[roslaunch][INFO] 2020-10-13 20:17:00,796: roslaunch starting with args ['/opt/ros/noetic/bin/roslaunch', 'test', 'test.launch']
+[roslaunch][INFO] 2020-10-13 20:17:00,797: roslaunch env is environ({'ROS_VERSION': '1', 'GAZEBO_MASTER_URI': 'http://localhost:11345', 'PKG_CONFIG_PATH': '/devel/lib/pkgconfig:/opt/ros/noetic/lib/pkgconfig', 'ROS_PYTHON_VERSION': '3', 'HOSTNAME': '0a07d089f874', 'ROS_PACKAGE_PATH': '/src:/opt/ros/noetic/share', 'ROSLISP_PACKAGE_DIRECTORIES': '/devel/share/common-lisp', 'PWD': '/', 'HOME': '/root', 'GAZEBO_PLUGIN_PATH': '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:', 'LANG': 'C.UTF-8', 'GAZEBO_MODEL_DATABASE_URI': 'http://models.gazebosim.org', 'ROS_ETC_DIR': '/opt/ros/noetic/etc/ros', 'CMAKE_PREFIX_PATH': '/devel:/opt/ros/noetic', 'GAZEBO_RESOURCE_PATH': '/usr/share/gazebo-11:', 'PYTHONPATH': '/opt/ros/noetic/lib/python3/dist-packages', 'TERM': 'xterm', 'SHLVL': '1', 'ROS_MASTER_URI': 'http://localhost:11311', 'LD_LIBRARY_PATH': '/devel/lib:/opt/ros/noetic/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins', 'LC_ALL': 'C.UTF-8', 'GAZEBO_MODEL_PATH': '/usr/share/gazebo-11/models:', 'PATH': '/opt/ros/noetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'ROS_ROOT': '/opt/ros/noetic/share/ros', 'ROS_DISTRO': 'noetic', 'OGRE_RESOURCE_PATH': '/usr/lib/x86_64-linux-gnu/OGRE-1.9.0', '_': '/opt/ros/noetic/bin/roslaunch', 'ROS_LOG_FILENAME': '/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/roslaunch-0a07d089f874-36.log'})
+[roslaunch][INFO] 2020-10-13 20:17:00,797: starting in server mode
+[roslaunch.parent][INFO] 2020-10-13 20:17:00,797: starting roslaunch parent run
+[roslaunch][INFO] 2020-10-13 20:17:00,798: loading roscore config file /opt/ros/noetic/etc/ros/roscore.xml
+[roslaunch][INFO] 2020-10-13 20:17:01,072: Added core node of type [rosout/rosout] in namespace [/]
+[roslaunch.config][INFO] 2020-10-13 20:17:01,072: loading config file /src/test/launch/test.launch
+[roslaunch][INFO] 2020-10-13 20:17:01,072: Added node of type [test/test.py] in namespace [/]
+[roslaunch][INFO] 2020-10-13 20:17:01,072: ... selected machine [] for node of type [test/test.py]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,073: start_process_monitor: creating ProcessMonitor
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,073: created process monitor <ProcessMonitor(ProcessMonitor-1, initial daemon)>
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,073: start_process_monitor: ProcessMonitor started
+[roslaunch.parent][INFO] 2020-10-13 20:17:01,074: starting parent XML-RPC server
+[roslaunch.server][INFO] 2020-10-13 20:17:01,074: starting roslaunch XML-RPC server
+[roslaunch.server][INFO] 2020-10-13 20:17:01,074: waiting for roslaunch XML-RPC server to initialize
+[xmlrpc][INFO] 2020-10-13 20:17:01,074: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2020-10-13 20:17:01,074: Started XML-RPC server [http://0a07d089f874:35973/]
+[xmlrpc][INFO] 2020-10-13 20:17:01,074: xml rpc node: starting XML-RPC server
+[roslaunch][INFO] 2020-10-13 20:17:01,086: started roslaunch server http://0a07d089f874:35973/
+[roslaunch.parent][INFO] 2020-10-13 20:17:01,086: ... parent XML-RPC server started
+[roslaunch][INFO] 2020-10-13 20:17:01,086: master.is_running[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,087: auto-starting new master
+[roslaunch][INFO] 2020-10-13 20:17:01,087: create_master_process: rosmaster, /opt/ros/noetic/share/ros, 11311, 3, None, False
+[roslaunch][INFO] 2020-10-13 20:17:01,087: process[master]: launching with args [['rosmaster', '--core', '-p', '11311', '-w', '3']]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,087: ProcessMonitor.register[master]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,087: ProcessMonitor.register[master] complete
+[roslaunch][INFO] 2020-10-13 20:17:01,087: process[master]: starting os process
+[roslaunch][INFO] 2020-10-13 20:17:01,087: process[master]: start w/ args [['rosmaster', '--core', '-p', '11311', '-w', '3', '__log:=/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/master.log']]
+[roslaunch][INFO] 2020-10-13 20:17:01,087: process[master]: cwd will be [/root/.ros]
+[roslaunch][INFO] 2020-10-13 20:17:01,090: process[master]: started with pid [44]
+[roslaunch][INFO] 2020-10-13 20:17:01,090: master.is_running[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,191: master.is_running[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,291: master.is_running[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,296: master.is_running[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,301: ROS_MASTER_URI=http://localhost:11311
+[roslaunch][INFO] 2020-10-13 20:17:01,304: setting /run_id to 0d31e0aa-0d91-11eb-9536-0242ac110003
+[roslaunch][INFO] 2020-10-13 20:17:01,307: setting /roslaunch/uris/host_0a07d089f874__35973' to http://0a07d089f874:35973/
+[roslaunch][INFO] 2020-10-13 20:17:01,313: ... preparing to launch node of type [rosout/rosout]
+[roslaunch][INFO] 2020-10-13 20:17:01,315: create_node_process: package[rosout] type[rosout] machine[Machine(name[] env_loader[None] address[localhost] ssh_port[22] user[None] assignable[True] timeout[10.0])] master_uri[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,315: process[rosout-1]: env[{'ROS_VERSION': '1', 'GAZEBO_MASTER_URI': 'http://localhost:11345', 'PKG_CONFIG_PATH': '/devel/lib/pkgconfig:/opt/ros/noetic/lib/pkgconfig', 'ROS_PYTHON_VERSION': '3', 'HOSTNAME': '0a07d089f874', 'ROS_PACKAGE_PATH': '/src:/opt/ros/noetic/share', 'ROSLISP_PACKAGE_DIRECTORIES': '/devel/share/common-lisp', 'PWD': '/', 'HOME': '/root', 'GAZEBO_PLUGIN_PATH': '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:', 'LANG': 'C.UTF-8', 'GAZEBO_MODEL_DATABASE_URI': 'http://models.gazebosim.org', 'ROS_ETC_DIR': '/opt/ros/noetic/etc/ros', 'CMAKE_PREFIX_PATH': '/devel:/opt/ros/noetic', 'GAZEBO_RESOURCE_PATH': '/usr/share/gazebo-11:', 'PYTHONPATH': '/opt/ros/noetic/lib/python3/dist-packages', 'TERM': 'xterm', 'SHLVL': '1', 'ROS_MASTER_URI': 'http://localhost:11311', 'LD_LIBRARY_PATH': '/devel/lib:/opt/ros/noetic/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins', 'LC_ALL': 'C.UTF-8', 'GAZEBO_MODEL_PATH': '/usr/share/gazebo-11/models:', 'PATH': '/opt/ros/noetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'ROS_ROOT': '/opt/ros/noetic/share/ros', 'ROS_DISTRO': 'noetic', 'OGRE_RESOURCE_PATH': '/usr/lib/x86_64-linux-gnu/OGRE-1.9.0', '_': '/opt/ros/noetic/bin/roslaunch', 'ROS_LOG_FILENAME': '/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/roslaunch-0a07d089f874-36.log'}]
+[roslaunch][INFO] 2020-10-13 20:17:01,348: process[rosout-1]: args[['/opt/ros/noetic/lib/rosout/rosout', '__name:=rosout']]
+[roslaunch][INFO] 2020-10-13 20:17:01,348: ... created process [rosout-1]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,349: ProcessMonitor.register[rosout-1]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,349: ProcessMonitor.register[rosout-1] complete
+[roslaunch][INFO] 2020-10-13 20:17:01,349: ... registered process [rosout-1]
+[roslaunch][INFO] 2020-10-13 20:17:01,349: process[rosout-1]: starting os process
+[roslaunch][INFO] 2020-10-13 20:17:01,349: process[rosout-1]: start w/ args [['/opt/ros/noetic/lib/rosout/rosout', '__name:=rosout', '__log:=/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/rosout-1.log']]
+[roslaunch][INFO] 2020-10-13 20:17:01,349: process[rosout-1]: cwd will be [/root/.ros]
+[roslaunch][INFO] 2020-10-13 20:17:01,352: process[rosout-1]: started with pid [54]
+[roslaunch][INFO] 2020-10-13 20:17:01,352: ... successfully launched [rosout-1]
+[roslaunch][INFO] 2020-10-13 20:17:01,352: load_parameters starting ...
+[roslaunch][INFO] 2020-10-13 20:17:01,355: ... load_parameters complete
+[roslaunch][INFO] 2020-10-13 20:17:01,356: launch_nodes: launching local nodes ...
+[roslaunch][INFO] 2020-10-13 20:17:01,356: ... preparing to launch node of type [test/test.py]
+[roslaunch][INFO] 2020-10-13 20:17:01,356: create_node_process: package[test] type[test.py] machine[Machine(name[] env_loader[None] address[localhost] ssh_port[22] user[None] assignable[True] timeout[10.0])] master_uri[http://localhost:11311]
+[roslaunch][INFO] 2020-10-13 20:17:01,356: process[test-2]: env[{'ROS_VERSION': '1', 'GAZEBO_MASTER_URI': 'http://localhost:11345', 'PKG_CONFIG_PATH': '/devel/lib/pkgconfig:/opt/ros/noetic/lib/pkgconfig', 'ROS_PYTHON_VERSION': '3', 'HOSTNAME': '0a07d089f874', 'ROS_PACKAGE_PATH': '/src:/opt/ros/noetic/share', 'ROSLISP_PACKAGE_DIRECTORIES': '/devel/share/common-lisp', 'PWD': '/', 'HOME': '/root', 'GAZEBO_PLUGIN_PATH': '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:', 'LANG': 'C.UTF-8', 'GAZEBO_MODEL_DATABASE_URI': 'http://models.gazebosim.org', 'ROS_ETC_DIR': '/opt/ros/noetic/etc/ros', 'CMAKE_PREFIX_PATH': '/devel:/opt/ros/noetic', 'GAZEBO_RESOURCE_PATH': '/usr/share/gazebo-11:', 'PYTHONPATH': '/opt/ros/noetic/lib/python3/dist-packages', 'TERM': 'xterm', 'SHLVL': '1', 'ROS_MASTER_URI': 'http://localhost:11311', 'LD_LIBRARY_PATH': '/devel/lib:/opt/ros/noetic/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins', 'LC_ALL': 'C.UTF-8', 'GAZEBO_MODEL_PATH': '/usr/share/gazebo-11/models:', 'PATH': '/opt/ros/noetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'ROS_ROOT': '/opt/ros/noetic/share/ros', 'ROS_DISTRO': 'noetic', 'OGRE_RESOURCE_PATH': '/usr/lib/x86_64-linux-gnu/OGRE-1.9.0', '_': '/opt/ros/noetic/bin/roslaunch', 'ROS_LOG_FILENAME': '/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/roslaunch-0a07d089f874-36.log'}]
+[roslaunch][INFO] 2020-10-13 20:17:01,357: process[test-2]: args[['/src/test/src/test.py', '__name:=test']]
+[roslaunch][INFO] 2020-10-13 20:17:01,357: ... created process [test-2]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,357: ProcessMonitor.register[test-2]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,357: ProcessMonitor.register[test-2] complete
+[roslaunch][INFO] 2020-10-13 20:17:01,357: ... registered process [test-2]
+[roslaunch][INFO] 2020-10-13 20:17:01,357: process[test-2]: starting os process
+[roslaunch][INFO] 2020-10-13 20:17:01,357: process[test-2]: start w/ args [['/src/test/src/test.py', '__name:=test', '__log:=/root/.ros/log/0d31e0aa-0d91-11eb-9536-0242ac110003/test-2.log']]
+[roslaunch][INFO] 2020-10-13 20:17:01,357: process[test-2]: cwd will be [/root/.ros]
+[roslaunch][INFO] 2020-10-13 20:17:01,360: process[test-2]: started with pid [57]
+[roslaunch][INFO] 2020-10-13 20:17:01,360: ... successfully launched [test-2]
+[roslaunch][INFO] 2020-10-13 20:17:01,360: ... launch_nodes complete
+[roslaunch.pmon][INFO] 2020-10-13 20:17:01,360: registrations completed <ProcessMonitor(ProcessMonitor-1, started daemon 140485033629440)>
+[roslaunch.parent][INFO] 2020-10-13 20:17:01,360: ... roslaunch parent running, waiting for process exit
+[roslaunch][INFO] 2020-10-13 20:17:01,360: spin
+[roslaunch.pmon][INFO] 2020-10-13 20:17:12,555: ProcessMonitor.shutdown <ProcessMonitor(ProcessMonitor-1, started daemon 140485033629440)>
+[roslaunch.pmon][INFO] 2020-10-13 20:17:12,634: ProcessMonitor._post_run <ProcessMonitor(ProcessMonitor-1, started daemon 140485033629440)>
+[roslaunch.pmon][INFO] 2020-10-13 20:17:12,635: ProcessMonitor._post_run <ProcessMonitor(ProcessMonitor-1, started daemon 140485033629440)>: remaining procs are [<roslaunch.nodeprocess.LocalProcess object at 0x7fc53888a5b0>, <roslaunch.nodeprocess.LocalProcess object at 0x7fc5389516a0>, <roslaunch.nodeprocess.LocalProcess object at 0x7fc53888a7c0>]
+[roslaunch.pmon][INFO] 2020-10-13 20:17:12,636: ProcessMonitor exit: killing test-2
+[roslaunch][INFO] 2020-10-13 20:17:12,637: [test-2] killing on exit
+[roslaunch][INFO] 2020-10-13 20:17:12,638: process[test-2]: killing os process with pid[57] pgid[57]
+[roslaunch][INFO] 2020-10-13 20:17:12,638: [test-2] sending SIGINT to pgid [57]
+[roslaunch][INFO] 2020-10-13 20:17:12,639: [test-2] sent SIGINT to pgid [57]
+[roslaunch][INFO] 2020-10-13 20:17:13,341: process[test-2]: SIGINT killed with return value 0
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,342: ProcessMonitor exit: killing rosout-1
+[roslaunch][INFO] 2020-10-13 20:17:13,342: [rosout-1] killing on exit
+[roslaunch][INFO] 2020-10-13 20:17:13,343: process[rosout-1]: killing os process with pid[54] pgid[54]
+[roslaunch][INFO] 2020-10-13 20:17:13,343: [rosout-1] sending SIGINT to pgid [54]
+[roslaunch][INFO] 2020-10-13 20:17:13,343: [rosout-1] sent SIGINT to pgid [54]
+[roslaunch][INFO] 2020-10-13 20:17:13,444: process[rosout-1]: SIGINT killed with return value 0
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,444: ProcessMonitor exit: killing master
+[roslaunch][INFO] 2020-10-13 20:17:13,444: [master] killing on exit
+[roslaunch][INFO] 2020-10-13 20:17:13,444: process[master]: killing os process with pid[44] pgid[44]
+[roslaunch][INFO] 2020-10-13 20:17:13,444: [master] sending SIGINT to pgid [44]
+[roslaunch][INFO] 2020-10-13 20:17:13,444: [master] sent SIGINT to pgid [44]
+[roslaunch][INFO] 2020-10-13 20:17:13,645: process[master]: SIGINT killed with return value 0
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,645: ProcessMonitor exit: cleaning up data structures and signals
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,645: ProcessMonitor exit: pmon has shutdown
+[roslaunch][INFO] 2020-10-13 20:17:13,646: process monitor is done spinning, initiating full shutdown
+[roslaunch][INFO] 2020-10-13 20:17:13,646: runner.stop()
+[roslaunch][INFO] 2020-10-13 20:17:13,646: shutting down processing monitor...
+[roslaunch][INFO] 2020-10-13 20:17:13,647: shutting down processing monitor <ProcessMonitor(ProcessMonitor-1, stopped daemon 140485033629440)>
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,647: ProcessMonitor.shutdown <ProcessMonitor(ProcessMonitor-1, stopped daemon 140485033629440)>
+[roslaunch][INFO] 2020-10-13 20:17:13,647: ... shutting down processing monitor complete
+[roslaunch][INFO] 2020-10-13 20:17:13,647: done
+[roslaunch.pmon][INFO] 2020-10-13 20:17:13,648: ProcessMonitor.shutdown <ProcessMonitor(ProcessMonitor-1, stopped daemon 140485033629440)>
+[rospy.core][INFO] 2020-10-13 20:17:13,648: signal_shutdown [atexit]

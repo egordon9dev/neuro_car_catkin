@@ -1,3 +1,4 @@
 source devel/setup.sh
 source /usr/share/gazebo/setup.sh
-roslaunch neurocar create_world.launch
+roslaunch neurocar_circler neurocar.launch &> ./log/roslaunch.log &
+rosbag record -a

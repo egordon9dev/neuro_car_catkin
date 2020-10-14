@@ -1,3 +1,0 @@
-<launch>
-    <node name="test" pkg="test" type="test.py"/>
-</launch>
