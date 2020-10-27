@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 WORKDIR /home/rg/neuro_car_catkin
 COPY . /home/rg/neuro_car_catkin
+RUN mkdir -p /root/.gazebo/models/urdf
+COPY urdf /root/.gazebo/models/urdf
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 

@@ -1,0 +1,4 @@
+export GAZEBO_MASTER_IP=$(docker inspect --format='{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -l -q))
+export GAZEBO_MASTER_URI=$GAZEBO_MASTER_IP:11345
+gzclient --verbose
+
