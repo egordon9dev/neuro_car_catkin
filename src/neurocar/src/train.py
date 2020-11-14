@@ -1,16 +1,18 @@
 from network import ReplayMemory, DQN, Transition
+from environment import NeurocarEnv
 import math
 import random
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-
+from itertools import count
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
+env = NeurocarEnv()
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -21,7 +23,7 @@ EPS_END = 0.05
 EPS_DECAY = 200
 TARGET_UPDATE = 10
 
-n_actions = len(actions_list)
+n_actions = env.action_space.n
 img_height = 36
 img_width = 64
 
@@ -29,7 +31,6 @@ policy_net = DQN(img_height, img_width, n_actions).to(device)
 target_net = DQN(img_height, img_width, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
-
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayMemory(10000)
 
@@ -122,23 +123,13 @@ def optimize_model():
 num_episodes = 50
 for i_episode in range(num_episodes):
     # Initialize the environment and state
-    env.reset()
-    last_screen = get_screen()
-    current_screen = get_screen()
-    state = current_screen - last_screen
+    state = env.reset()
     for t in count():
         # Select and perform an action
         action = select_action(state)
-        _, reward, done, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-
-        # Observe new state
-        last_screen = current_screen
-        current_screen = get_screen()
-        if not done:
-            next_state = current_screen - last_screen
-        else:
-            next_state = None
+        obs, rew, _, _ = env.step(action.item())
+        reward = torch.tensor([rew], device=device)
+        next_state = obs
 
         # Store the transition in memory
         memory.push(state, action, next_state, reward)
@@ -148,7 +139,7 @@ for i_episode in range(num_episodes):
 
         # Perform one step of the optimization (on the target network)
         optimize_model()
-        if done:
+        if t == 9999:
             episode_durations.append(t + 1)
             plot_durations()
             break
