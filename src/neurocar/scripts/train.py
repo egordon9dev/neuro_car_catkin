@@ -166,6 +166,7 @@ for i_episode in range(num_episodes):
         if t == 999 or done:
             ep_rewards.append(ep_rew)
             append_log(f"Episode {i_episode+1} completed with cumulative reward: {ep_rew}")
+            torch.save(target_net, "target_net.pt")
             plot_rewards()
             break
     # Update the target network, copying all weights and biases in DQN
