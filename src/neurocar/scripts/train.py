@@ -1,5 +1,3 @@
-from network import ReplayMemory, DQN, Transition
-from environment import NeurocarEnv
 import math
 import random
 import numpy as np
@@ -11,8 +9,23 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
+import os
+import rospy
+from std_msgs.msg import String
 
+# Set up ROS
+rospy.init_node('neurocar', anonymous=True)
+pub_log = rospy.Publisher("/neurocar/log", String, queue_size=10)
+
+# Load the Environment
+from neurocar.network import ReplayMemory, DQN, Transition
+from neurocar.environment import NeurocarEnv
 env = NeurocarEnv()
+
+logfile = "/home/rg/neuro_car_catkin/neurocar_log.txt"
+with open(logfile, "w+") as f:
+    f.write("Neurocar Log:\n")
+
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -26,17 +39,25 @@ TARGET_UPDATE = 10
 n_actions = env.action_space.n
 img_height = 36
 img_width = 64
-
+def append_log(s):
+    with open(logfile, "a") as f:
+        f.write(s + "\n")
+append_log("loading models...")
 policy_net = DQN(img_height, img_width, n_actions).to(device)
 target_net = DQN(img_height, img_width, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
+append_log("successfully loaded models!")
 target_net.eval()
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayMemory(10000)
 
-
 steps_done = 0
 
+def state_from_obs(obs):
+    # get the camera image from the observation dict and convert the image
+    # to the correct shape: (C, H, W)
+    img = torch.tensor(obs / 255.0, dtype=torch.float32)
+    return torch.transpose(torch.transpose(img, 0, 1), 0, 2)
 
 def select_action(state):
     global steps_done
@@ -49,32 +70,29 @@ def select_action(state):
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1)[1].view(1, 1)
+            return policy_net(torch.unsqueeze(state, 0)).max(1)[1].view(1, 1)
     else:
-        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
+        explore_act = random.randrange(n_actions)
+        return torch.tensor([[explore_act]], device=device, dtype=torch.long)
+
+ep_rewards = []
 
 
-episode_durations = []
-
-
-def plot_durations():
+def plot_rewards():
     plt.figure(2)
     plt.clf()
-    durations_t = torch.tensor(episode_durations, dtype=torch.float)
+    rewards_t = torch.tensor(ep_rewards, dtype=torch.float)
     plt.title('Training...')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
-    plt.plot(durations_t.numpy())
+    plt.plot(rewards_t.numpy())
     # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
+    if len(rewards_t) >= 100:
+        means = rewards_t.unfold(0, 100, 1).mean(1).view(-1)
         means = torch.cat((torch.zeros(99), means))
         plt.plot(means.numpy())
 
     plt.pause(0.001)  # pause a bit so that plots are updated
-    if is_ipython:
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
 
 def optimize_model():
     if len(memory) < BATCH_SIZE:
@@ -89,9 +107,9 @@ def optimize_model():
     # (a final state would've been the one after which simulation ended)
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                                           batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
+    non_final_next_states = torch.cat([torch.unsqueeze(s, 0) for s in batch.next_state
                                                 if s is not None])
-    state_batch = torch.cat(batch.state)
+    state_batch = torch.cat([torch.unsqueeze(s,0) for s in batch.state])
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
 
@@ -121,15 +139,21 @@ def optimize_model():
     optimizer.step()
 
 num_episodes = 50
+append_log("beginning training...")
 for i_episode in range(num_episodes):
     # Initialize the environment and state
-    state = env.reset()
+    obs0 = env.reset()
+    state = state_from_obs(obs0)
+    ep_rew = 0
     for t in count():
         # Select and perform an action
         action = select_action(state)
-        obs, rew, _, _ = env.step(action.item())
+        obs, rew, done, _ = env.step(action)
+        ep_rew += rew
         reward = torch.tensor([rew], device=device)
-        next_state = obs
+        next_state = None
+        if not done:
+            next_state = state_from_obs(obs)
 
         # Store the transition in memory
         memory.push(state, action, next_state, reward)
@@ -138,17 +162,17 @@ for i_episode in range(num_episodes):
         state = next_state
 
         # Perform one step of the optimization (on the target network)
-        optimize_model()
-        if t == 9999:
-            episode_durations.append(t + 1)
-            plot_durations()
+        # optimize_model()
+        if t == 999 or done:
+            ep_rewards.append(ep_rew)
+            append_log(f"Episode {i_episode+1} completed with cumulative reward: {ep_rew}")
+            plot_rewards()
             break
     # Update the target network, copying all weights and biases in DQN
     if i_episode % TARGET_UPDATE == 0:
         target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
-env.render()
 env.close()
 plt.ioff()
 plt.show()

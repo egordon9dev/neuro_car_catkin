@@ -1,0 +1,12 @@
+Neurocar Log:
+loading models...
+successfully loaded models!
+beginning training...
+Episode 1 completed with cumulative reward: 5.606079165391638
+Episode 2 completed with cumulative reward: 13.276388739573335
+Episode 3 completed with cumulative reward: 0.12270940957977985
+Episode 4 completed with cumulative reward: 14.515172140673112
+Episode 5 completed with cumulative reward: 6.0687841583720825
+Episode 6 completed with cumulative reward: 3.4675689742752898
+Episode 7 completed with cumulative reward: 6.628925736290595
+Episode 8 completed with cumulative reward: 2.55377039838262

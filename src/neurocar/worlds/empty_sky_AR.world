@@ -18,13 +18,13 @@
     <include>
       <name>track</name>
       <uri>model://urdf/models/track</uri>
-      <pose>0 0 0.0762 0 0 0.785398</pose>
+      <pose>0 0 0.0762 0 0 0</pose>
     </include>
     <!-- A ground plane -->
     <include>
       <name>blended_plane</name>
       <uri>model://urdf/models/blended_track</uri>
-      <pose>0 0 0 0 0 0.785398</pose>
+      <pose>0 0 0 0 0 0</pose>
     </include>
 
     <model name="neurocar">
@@ -124,10 +124,10 @@
               <ray>
                   <scan>
                     <horizontal>
-                      <samples>3</samples>
+                      <samples>72</samples>
                       <resolution>1.000000</resolution>
-                      <min_angle>-0.8</min_angle>
-                      <max_angle>0.8</max_angle>
+                      <min_angle>-1.570796</min_angle>
+                      <max_angle>1.570796</max_angle>
                     </horizontal>
                   </scan>
                   <range>
@@ -138,11 +138,11 @@
               </ray>
               <plugin name='laser_controller' filename='libgazebo_ros_laser.so'>
                   <alwaysOn>true</alwaysOn>
-                  <updateRate>60</updateRate>
+                  <updateRate>30</updateRate>
                   <topicName>/neurocar/laser/scan</topicName>
                   <frameName>laser_link</frameName>
               </plugin>
-              <update_rate>60</update_rate>
+              <update_rate>20</update_rate>
             </sensor>
           </link>
         </model>
@@ -170,7 +170,7 @@
           </limit>
         </axis>
       </joint>
-      <pose>-5 3 0 0 0 0.7</pose>
+      <pose>3 6 0 0 0 0.3</pose>
     </model>
   </world>
 </sdf>

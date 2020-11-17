@@ -4,6 +4,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan
+from gazebo_msgs.msg import ModelState
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from math import sin

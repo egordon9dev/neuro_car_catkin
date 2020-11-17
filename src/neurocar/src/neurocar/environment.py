@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 import gym
 from gym import spaces
 import numpy as np
-from geometry_msgs.msg import Twist, Pose, ModelState
+from geometry_msgs.msg import Twist, Pose
+from gazebo_msgs.msg import ModelState
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, LaserScan
 from nav_msgs.msg import Odometry
@@ -16,25 +18,27 @@ import rospy
 bridge = CvBridge()
 pub_action = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
 pub_state = rospy.Publisher("gazebo/set_model_state", ModelState, queue_size=10)
+pub_log = rospy.Publisher("/neurocar/log", String, queue_size=10)
 neurocar_msg = Twist()
 rate = rospy.Rate(60)
-
+crash_distance = 0.2
 shrink_height = 36
 shrink_width = 64
 
-observation_ready = False
+observation = None
+reward = None
 def reset_observation():
-    observation_ready = False
+    global observation, reward
     observation = None
     reward = None
-    real_twist = None
-    ranges = None
 def await_observation():
-    while(observation_ready == False):
-        rospy.sleep(rospy.Duration(nsecs=2000))
+    rate = rospy.Rate(50)
+    while(observation is None or reward is None):
+        rate.sleep()
 
 display_img = None
 def img_callback(img):
+    global observation
     try:
         img = bridge.imgmsg_to_cv2(img, "bgr8")
     except CvBridgeError as e:
@@ -42,24 +46,25 @@ def img_callback(img):
         return
     img = cv2.resize(img, (shrink_width, shrink_height), interpolation=cv2.INTER_AREA)
     display_img = img
+    observation = img
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    await_observation = False
 
+ranges = None
 def laser_callback(laser_scan):
+    global ranges
     ranges = laser_scan.ranges
 
 def odom_callback(odom):
+    global reward
     real_twist = odom.twist.twist
+    l = real_twist.linear
+    r = real_twist.angular
+    reward = max(0, l.x**2 + l.y**2 + l.z**2 - (r.x**2 + r.y**2 + r.z**2))
 
 img_sub = rospy.Subscriber('neurocar/camera/image_raw', Image, img_callback)
 laser_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
 odom_sub = rospy.Subscriber('neurocar/odom', Odometry, odom_callback)
 
-actions_list = [
-    { "linear": 1, "angular": -1 },
-    { "linear": 1, "angular": 0 },
-    { "linear": 1, "angular": 1 }
-]
 img_shape = (36, 64, 3)
 
 def get_random_state():
@@ -102,18 +107,32 @@ class NeurocarEnv(gym.Env):
         # Define action and observation space
         # They must be gym.spaces objects
         # Example when using discrete actions:
-        self.actions_list = actions_list
-        self.action_space = spaces.Discrete(len(actions_list))
+        self.action_space = spaces.Discrete(3)
         # Example for using image as input:
         self.observation_space = spaces.Box(low=0, high=255, shape=img_shape, dtype=np.uint8)
         reset_observation()
+        pub_log.publish("Neurocar environment initializated successfully!")
+        rospy.loginfo("Neurocar environment initializated successfully!")
 
-    def step(self, action):
-        pub_action.publish(Twist(**self.actions_list[action]))
+    def step(self, a_idx):
+        act = Twist()
+        if a_idx == 0:
+            # left
+            act.linear.x = 1
+            act.angular.z = -1
+        elif a_idx == 1:
+            # forward
+            act.linear.x = 1
+            act.angular.z = 0
+        elif a_idx == 2:
+            # right
+            act.linear.x = 1
+            act.angular.z = 1
+        pub_action.publish(act)
         await_observation()
         obs = observation
         rew = reward
-        done = False
+        done = np.min(ranges) < crash_distance
         info = None
         reset_observation()
         return obs, rew, done, info
