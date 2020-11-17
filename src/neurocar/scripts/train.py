@@ -138,7 +138,7 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
 
-num_episodes = 50
+num_episodes = 10000
 append_log("beginning training...")
 for i_episode in range(num_episodes):
     # Initialize the environment and state
