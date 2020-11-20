@@ -2,14 +2,125 @@ Neurocar Log:
 loading models...
 successfully loaded models!
 beginning training...
-Episode 1 completed with cumulative reward: 4.269719882802209
-Episode 2 completed with cumulative reward: 0.5818526687485215
-Episode 3 completed with cumulative reward: 1.877588247011493
-Episode 4 completed with cumulative reward: 0.8126705809034553
-Episode 5 completed with cumulative reward: 0.3635386596529328
-Episode 6 completed with cumulative reward: 0.12779515387599688
-Episode 7 completed with cumulative reward: 0.4985431414645709
-Episode 8 completed with cumulative reward: 0.7406184789871542
-Episode 9 completed with cumulative reward: 2.9334472428748963
-Episode 10 completed with cumulative reward: 6.2018980684940885
-Episode 11 completed with cumulative reward: 0.3219057385388789
+Episode 1 completed. cumulative reward: -527.5334026079335		epsilon: 0.8892732589814186
+Episode 2 completed. cumulative reward: -923.41881301736		epsilon: 0.8706004673123655
+Episode 3 completed. cumulative reward: -662.6533148121246		epsilon: 0.848740689658615
+Episode 4 completed. cumulative reward: -547.5895466119139		epsilon: 0.8419801667229263
+Episode 5 completed. cumulative reward: -516.451447489826		epsilon: 0.832454950479146
+Episode 6 completed. cumulative reward: -525.8563307411355		epsilon: 0.8225806074056206
+Episode 7 completed. cumulative reward: -883.7236746447902		epsilon: 0.7969784600811642
+Episode 8 completed. cumulative reward: -520.3462010816697		epsilon: 0.788437412940539
+Episode 9 completed. cumulative reward: -608.5042777189365		epsilon: 0.7803591135011316
+Episode 10 completed. cumulative reward: -491.95085464036197		epsilon: 0.7773707714232048
+Episode 11 completed. cumulative reward: -725.1542416983051		epsilon: 0.774104956546334
+Episode 12 completed. cumulative reward: -541.3035042715983		epsilon: 0.7660402278170206
+Episode 13 completed. cumulative reward: -569.4233071970739		epsilon: 0.7612587939805325
+Episode 14 completed. cumulative reward: -1117.4859873459166		epsilon: 0.753477821055818
+Episode 15 completed. cumulative reward: -726.2702273552503		epsilon: 0.7509498539709736
+Episode 16 completed. cumulative reward: -455.02843571591103		epsilon: 0.7461299477779028
+Episode 17 completed. cumulative reward: -402.10527284261366		epsilon: 0.7121792896024864
+Episode 18 completed. cumulative reward: -542.298659953606		epsilon: 0.7061151778244639
+Episode 19 completed. cumulative reward: -1603.0453231001843		epsilon: 0.6954426429005295
+Episode 20 completed. cumulative reward: -555.880713174481		epsilon: 0.6912608712030038
+Episode 21 completed. cumulative reward: -632.5322621904237		epsilon: 0.6831050407206604
+Episode 22 completed. cumulative reward: -536.6060796951166		epsilon: 0.6779348063183149
+Episode 23 completed. cumulative reward: -572.5360012091011		epsilon: 0.6740536545223239
+Episode 24 completed. cumulative reward: -709.579163965368		epsilon: 0.670444619644562
+Episode 25 completed. cumulative reward: -702.9936965358822		epsilon: 0.6584631485649778
+Episode 26 completed. cumulative reward: -893.6094522652409		epsilon: 0.6516863820332789
+Episode 27 completed. cumulative reward: -564.7380214996988		epsilon: 0.6475490362550904
+Episode 28 completed. cumulative reward: -544.5522084023728		epsilon: 0.6423136741149555
+Episode 29 completed. cumulative reward: -556.5349823079807		epsilon: 0.6377115988827622
+Episode 30 completed. cumulative reward: -540.722986803368		epsilon: 0.6323876838855658
+Episode 31 completed. cumulative reward: -566.9079158175638		epsilon: 0.6276316313428472
+Episode 32 completed. cumulative reward: -572.8424741674748		epsilon: 0.6240613943996969
+Episode 33 completed. cumulative reward: -4146.756317050136		epsilon: 0.5975952118449032
+Episode 34 completed. cumulative reward: -570.2772355459841		epsilon: 0.5940473858935482
+Episode 35 completed. cumulative reward: -522.3563066861957		epsilon: 0.5871279581645715
+Episode 36 completed. cumulative reward: -601.8728886445729		epsilon: 0.5848232665825098
+Episode 37 completed. cumulative reward: -426.815948712714		epsilon: 0.579184080444746
+Episode 38 completed. cumulative reward: -588.3449447236436		epsilon: 0.5764921119888794
+Episode 39 completed. cumulative reward: -971.4986943821365		epsilon: 0.5745476905724013
+Episode 40 completed. cumulative reward: -562.1741605263425		epsilon: 0.5707324350567538
+Episode 41 completed. cumulative reward: -925.3651446814765		epsilon: 0.5416348909713071
+Episode 42 completed. cumulative reward: -333.7038916679275		epsilon: 0.5005352631124511
+Episode 43 completed. cumulative reward: -736.8317324914402		epsilon: 0.49846756026473166
+Episode 44 completed. cumulative reward: -417.77087161884924		epsilon: 0.4822639294465223
+Episode 45 completed. cumulative reward: -582.8919338207037		epsilon: 0.47980703385315954
+Episode 46 completed. cumulative reward: -601.7783633649902		epsilon: 0.47740684127529975
+Episode 47 completed. cumulative reward: -739.7919845528419		epsilon: 0.4762970268719038
+Episode 48 completed. cumulative reward: -849.109814992302		epsilon: 0.47476511666799465
+Episode 49 completed. cumulative reward: -594.9892321566717		epsilon: 0.47213972008407823
+Episode 50 completed. cumulative reward: -714.78538216269		epsilon: 0.46965642864892626
+Episode 51 completed. cumulative reward: -566.0649779006692		epsilon: 0.4662709413107215
+Episode 52 completed. cumulative reward: -507.695185493192		epsilon: 0.46105883269052816
+Episode 53 completed. cumulative reward: -584.814749737832		epsilon: 0.45888598401253927
+Episode 54 completed. cumulative reward: -1302.2804980429862		epsilon: 0.436038208178431
+Episode 55 completed. cumulative reward: -481.351254484793		epsilon: 0.4277136426819834
+Episode 56 completed. cumulative reward: -620.4861358296091		epsilon: 0.4131574001398956
+Episode 57 completed. cumulative reward: -724.5308563346425		epsilon: 0.3989875853422082
+Episode 58 completed. cumulative reward: -432.19278555069127		epsilon: 0.3883687744817164
+Episode 59 completed. cumulative reward: -938.80777751747		epsilon: 0.3837647319733356
+Episode 60 completed. cumulative reward: -727.481636210568		epsilon: 0.38259859733747054
+Episode 61 completed. cumulative reward: -510.30472827683866		epsilon: 0.37807306721810585
+Episode 62 completed. cumulative reward: -656.9302863837235		epsilon: 0.37451648934783643
+Episode 63 completed. cumulative reward: -2208.835563802756		epsilon: 0.37083800854769267
+Episode 64 completed. cumulative reward: 552.5576324253994		epsilon: 0.34030623526209336
+Episode 65 completed. cumulative reward: -445.8435688800605		epsilon: 0.3381658981355848
+Episode 66 completed. cumulative reward: -605.2574524470851		epsilon: 0.3143664871784683
+Episode 67 completed. cumulative reward: 284.4807870895474		epsilon: 0.2892086896738019
+Episode 68 completed. cumulative reward: -667.4627631503356		epsilon: 0.27079537099450146
+Episode 69 completed. cumulative reward: -713.3798774030795		epsilon: 0.26971612000096307
+Episode 70 completed. cumulative reward: -648.0113445712533		epsilon: 0.26755166215745946
+Episode 71 completed. cumulative reward: -579.7828137237482		epsilon: 0.2663151451046306
+Episode 72 completed. cumulative reward: -522.2669586509736		epsilon: 0.26397011366207157
+Episode 73 completed. cumulative reward: 143.9007476000445		epsilon: 0.24823166053649892
+Episode 74 completed. cumulative reward: -713.1399349313147		epsilon: 0.24740083352029502
+Episode 75 completed. cumulative reward: -548.1732815997475		epsilon: 0.24596505440541622
+Episode 76 completed. cumulative reward: -839.5961748773267		epsilon: 0.23700518607367943
+Episode 77 completed. cumulative reward: -727.8285545319002		epsilon: 0.23113386607627212
+Episode 78 completed. cumulative reward: -514.6094390778395		epsilon: 0.22657334623973352
+Episode 79 completed. cumulative reward: -16843.010123790064		epsilon: 0.21784423043305062
+Episode 80 completed. cumulative reward: 125.448912498414		epsilon: 0.2018717400972742
+Episode 81 completed. cumulative reward: -725.0682931130946		epsilon: 0.20114450251130922
+Episode 82 completed. cumulative reward: -526.7785353848856		epsilon: 0.19974537466663123
+Episode 83 completed. cumulative reward: -299.0632317727067		epsilon: 0.19432047527108398
+Episode 84 completed. cumulative reward: -572.8762765599163		epsilon: 0.1933424251783062
+Episode 85 completed. cumulative reward: -542.7196609006767		epsilon: 0.19188776382627487
+Episode 86 completed. cumulative reward: -550.7445746423643		epsilon: 0.1907431150252865
+Episode 87 completed. cumulative reward: -583.9840976791917		epsilon: 0.18994316130362265
+Episode 88 completed. cumulative reward: -641.5809736116264		epsilon: 0.18846759809497438
+Episode 89 completed. cumulative reward: -458.22682200259385		epsilon: 0.18052128925150374
+Episode 90 completed. cumulative reward: -458.6602958666259		epsilon: 0.1744913641801816
+Episode 91 completed. cumulative reward: -859.0161313642038		epsilon: 0.17261340409811876
+Episode 92 completed. cumulative reward: -534.815984032492		epsilon: 0.1714055202877834
+Episode 93 completed. cumulative reward: -736.2029792720311		epsilon: 0.17081208833401795
+Episode 94 completed. cumulative reward: -571.8014730811436		epsilon: 0.1700173540590043
+Episode 95 completed. cumulative reward: -571.5249062952308		epsilon: 0.1692516957131787
+Episode 96 completed. cumulative reward: -367.26440116208795		epsilon: 0.16566942629870235
+Episode 97 completed. cumulative reward: -558.1861172527808		epsilon: 0.16489703155429264
+Episode 98 completed. cumulative reward: -577.8391968168999		epsilon: 0.16412979455692367
+Episode 99 completed. cumulative reward: -713.6144557721128		epsilon: 0.16351515468753774
+Episode 100 completed. cumulative reward: -614.0556716344643		epsilon: 0.1630167852237687
+Episode 101 completed. cumulative reward: -983.046555165098		epsilon: 0.1625543650135557
+Episode 102 completed. cumulative reward: -576.4255850555737		epsilon: 0.1617357098757176
+Episode 103 completed. cumulative reward: -541.1238838973632		epsilon: 0.16084539022368638
+Episode 104 completed. cumulative reward: -615.239533460361		epsilon: 0.15918419839353554
+Episode 105 completed. cumulative reward: -700.6172271950795		epsilon: 0.15853105459400313
+Episode 106 completed. cumulative reward: -582.7419913696265		epsilon: 0.15783867382638261
+Episode 107 completed. cumulative reward: 856.3946760436686		epsilon: 0.14757646718948608
+Episode 108 completed. cumulative reward: -463.116630467534		epsilon: 0.1450246516968633
+Episode 109 completed. cumulative reward: -1268.1924012236982		epsilon: 0.1389288266717957
+Episode 110 completed. cumulative reward: 551.4172460655851		epsilon: 0.130466129914675
+Episode 111 completed. cumulative reward: -422.7725043867199		epsilon: 0.12684853060360418
+Episode 112 completed. cumulative reward: -343.93817601635976		epsilon: 0.12431674894113219
+Episode 113 completed. cumulative reward: -730.9760806568536		epsilon: 0.12413860260478735
+Episode 114 completed. cumulative reward: -617.5316712490148		epsilon: 0.12306404238407223
+Episode 115 completed. cumulative reward: -570.2789581056002		epsilon: 0.12244562999979419
+Episode 116 completed. cumulative reward: -430.90326102837093		epsilon: 0.12080547650575371
+Episode 117 completed. cumulative reward: -646.9649502937632		epsilon: 0.1198699983874006
+Episode 118 completed. cumulative reward: -555.8747420619817		epsilon: 0.11932019996332226
+Episode 119 completed. cumulative reward: -370.66636929891655		epsilon: 0.1164623983559129
+Episode 120 completed. cumulative reward: -466.8835343801466		epsilon: 0.11402901560737935
+Episode 121 completed. cumulative reward: -1809.3561243474774		epsilon: 0.1123358280441553
+Episode 122 completed. cumulative reward: -461.39091346137707		epsilon: 0.11188862195608307

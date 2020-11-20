@@ -22,6 +22,8 @@ pub_log = rospy.Publisher("/neurocar/log", String, queue_size=10)
 neurocar_msg = Twist()
 rate = rospy.Rate(60)
 crash_distance = 0.2
+danger_zones = [(0.5, -1), (0.4, -10), (0.3, -100)]
+happy_zone = (1.0, 1)
 shrink_height = 36
 shrink_width = 64
 
@@ -32,7 +34,6 @@ def reset_observation():
     observation = None
     reward = None
 def await_observation():
-    rate = rospy.Rate(50)
     while(observation is None or reward is None):
         rate.sleep()
 
@@ -60,6 +61,13 @@ def odom_callback(odom):
     l = real_twist.linear
     r = real_twist.angular
     reward = max(0, l.x**2 + l.y**2 + l.z**2 - (r.x**2 + r.y**2 + r.z**2))
+    if ranges is not None:
+        for danger_distance, rew_offset in danger_zones:
+            if np.min(ranges) < danger_distance:
+                reward += rew_offset
+        happy_distance, rew_offset = happy_zone
+        if np.min(ranges) > happy_distance:
+            reward += rew_offset
 
 img_sub = rospy.Subscriber('neurocar/camera/image_raw', Image, img_callback)
 laser_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)

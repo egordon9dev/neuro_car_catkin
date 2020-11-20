@@ -2,6 +2,7 @@ import math
 import random
 import numpy as np
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from itertools import count
 import torch
@@ -33,7 +34,7 @@ BATCH_SIZE = 128
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 200
+EPS_DECAY = 10000
 TARGET_UPDATE = 10
 
 n_actions = env.action_space.n
@@ -93,6 +94,7 @@ def plot_rewards():
         plt.plot(means.numpy())
 
     plt.pause(0.001)  # pause a bit so that plots are updated
+    plt.savefig("neurocar_rewards_plot.png")
 
 def optimize_model():
     if len(memory) < BATCH_SIZE:
@@ -162,10 +164,11 @@ for i_episode in range(num_episodes):
         state = next_state
 
         # Perform one step of the optimization (on the target network)
-        # optimize_model()
+        optimize_model()
         if t == 999 or done:
             ep_rewards.append(ep_rew)
-            append_log(f"Episode {i_episode+1} completed with cumulative reward: {ep_rew}")
+            epsilon = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
+            append_log(f"Episode {i_episode+1} completed. cumulative reward: {ep_rew}\t\tepsilon: {epsilon}")
             torch.save(target_net, "target_net.pt")
             plot_rewards()
             break
