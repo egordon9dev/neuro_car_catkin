@@ -72,14 +72,14 @@ def odom_callback(odom):
     real_twist = odom.twist.twist
     l = real_twist.linear
     r = real_twist.angular
-    reward = max(0, l.x**2 + l.y**2 + l.z**2 - (r.x**2 + r.y**2 + r.z**2))
-    if ranges is not None:
-        for danger_distance, rew_offset in danger_zones:
-            if np.min(ranges) < danger_distance:
-                reward += rew_offset
-        happy_distance, rew_offset = happy_zone
-        if np.min(ranges) > happy_distance:
-            reward += rew_offset
+    reward = max(0, l.x**2 + l.y**2 + l.z**2 - (r.x**2 + r.y**2 + r.z**2)) - 1 / np.min(ranges)
+    # if ranges is not None:
+    #     for danger_distance, rew_offset in danger_zones:
+    #         if np.min(ranges) < danger_distance:
+    #             reward += rew_offset
+    #     happy_distance, rew_offset = happy_zone
+    #     if np.min(ranges) > happy_distance:
+    #         reward += rew_offset
     lock.release()
 
 img_sub = rospy.Subscriber('neurocar/camera/image_raw', Image, img_callback)

@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import os
 import rospy
+import cv2
 from std_msgs.msg import String
 
 # Set up ROS
@@ -28,7 +29,7 @@ with open(logfile, "w+") as f:
     f.write("Neurocar Log:\n")
 
 # if gpu is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 BATCH_SIZE = 256
 GAMMA = 0.999
@@ -36,6 +37,7 @@ EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 10000
 TARGET_UPDATE = 10
+test_time = False
 
 n_actions = env.action_space.n
 img_height = 36
@@ -63,7 +65,11 @@ def state_from_obs(obs):
     # get the camera image from the observation dict and convert the image
     # to the correct shape: (C, H, W)
     img = torch.tensor(obs / 255.0, dtype=torch.float32)
-    return torch.transpose(torch.transpose(img, 0, 1), 0, 2)
+    img = torch.transpose(torch.transpose(img, 0, 1), 0, 2)
+    # img[0] -= torch.tensor(0.4590, dtype=torch.float32)
+    # img[1] -= torch.tensor(0.3754, dtype=torch.float32)
+    # img[2] -= torch.tensor(0.3513, dtype=torch.float32)
+    return img
 
 def select_action(state):
     global steps_done
@@ -71,7 +77,7 @@ def select_action(state):
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if sample > eps_threshold:
+    if sample > eps_threshold or test_time:
         with torch.no_grad():
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
@@ -82,8 +88,9 @@ def select_action(state):
         return torch.tensor([[explore_act]], device=device, dtype=torch.long)
 
 ep_durations = []
+ep_losses = []
 
-def plot_rewards():
+def update_plots():
     plt.figure(2)
     plt.clf()
     durations_t = torch.tensor(ep_durations, dtype=torch.float)
@@ -92,15 +99,29 @@ def plot_rewards():
     plt.ylabel('Duration')
     plt.plot(durations_t.numpy())
     # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(99), means))
+    if len(durations_t) >= 10:
+        means = durations_t.unfold(0, 10, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(9), means))
         plt.plot(means.numpy())
-
-    plt.pause(0.001)  # pause a bit so that plots are updated
     plt.savefig("neurocar_durations_plot.png")
 
+    plt.figure(2)
+    plt.clf()
+    losses_t = torch.tensor(ep_losses, dtype=torch.float)
+    plt.title("Training Loss")
+    plt.xlabel('Episode')
+    plt.ylabel('Loss')
+    plt.plot(losses_t.numpy())
+    if len(losses_t) >= 10:
+        means = losses_t.unfold(0, 10, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(9), means))
+        plt.plot(means.numpy())
+    plt.savefig("neurocar_losses_plot.png")
+
+
+losses = []
 def optimize_model():
+    global losses
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
@@ -136,6 +157,7 @@ def optimize_model():
 
     # Compute Huber loss
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+    losses.append(loss.detach().numpy())
 
     # Optimize the model
     optimizer.zero_grad()
@@ -154,7 +176,10 @@ for i_episode in range(num_episodes):
         # Select and perform an action
         action = select_action(state)
         obs, rew, done, _ = env.step(action)
-        reward = torch.tensor([rew], device=device)
+        if test_time:
+            cv2.imshow("camera", cv2.resize(obs,(640, 360)))
+            cv2.waitKey(1)
+        reward = torch.tensor([rew], device=device, dtype=torch.float32)
         next_state = None
         if not done:
             next_state = state_from_obs(obs)
@@ -169,10 +194,13 @@ for i_episode in range(num_episodes):
         optimize_model()
         if done:
             ep_durations.append(t+1)
-            epsilon = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
-            append_log(f"Episode {i_episode+1} completed. duration: {t+1}\t\tepsilon: {epsilon}")
-            torch.save(target_net, "target_net.pt")
-            plot_rewards()
+            ep_losses.append(np.mean(losses))
+            losses = []
+            if not test_time:
+                epsilon = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
+                append_log(f"Episode {i_episode+1} completed. duration: {t+1}\t\tepsilon: {epsilon}")
+                torch.save(target_net, "target_net.pt")
+            update_plots()
             break
     # Update the target network, copying all weights and biases in DQN
     if i_episode % TARGET_UPDATE == 0:
