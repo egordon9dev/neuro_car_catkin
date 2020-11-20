@@ -14,6 +14,7 @@ import time
 import random
 from scipy.spatial.transform import Rotation
 import rospy
+from threading import Lock
 
 bridge = CvBridge()
 pub_action = rospy.Publisher('neurocar/cmd_vel', Twist, queue_size=10)
@@ -29,34 +30,45 @@ shrink_width = 64
 
 observation = None
 reward = None
+lock = Lock()
 def reset_observation():
     global observation, reward
+    lock.acquire()
     observation = None
     reward = None
+    lock.release()
 def await_observation():
+    lock.acquire()
     while(observation is None or reward is None):
+        lock.release()
         rate.sleep()
+        lock.acquire()
+    obs = observation.copy()
+    rew = reward
+    lock.release()
+    return obs, rew
 
 display_img = None
 def img_callback(img):
     global observation
-    try:
-        img = bridge.imgmsg_to_cv2(img, "bgr8")
-    except CvBridgeError as e:
-        print(e)
-        return
+    lock.acquire()
+    img = bridge.imgmsg_to_cv2(img, "bgr8")
     img = cv2.resize(img, (shrink_width, shrink_height), interpolation=cv2.INTER_AREA)
     display_img = img
     observation = img
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lock.release()
 
 ranges = None
 def laser_callback(laser_scan):
     global ranges
+    lock.acquire()
     ranges = laser_scan.ranges
+    lock.release()
 
 def odom_callback(odom):
     global reward
+    lock.acquire()
     real_twist = odom.twist.twist
     l = real_twist.linear
     r = real_twist.angular
@@ -68,6 +80,7 @@ def odom_callback(odom):
         happy_distance, rew_offset = happy_zone
         if np.min(ranges) > happy_distance:
             reward += rew_offset
+    lock.release()
 
 img_sub = rospy.Subscriber('neurocar/camera/image_raw', Image, img_callback)
 laser_sub = rospy.Subscriber('neurocar/laser/scan', LaserScan, laser_callback)
@@ -137,9 +150,7 @@ class NeurocarEnv(gym.Env):
             act.linear.x = 1
             act.angular.z = 1
         pub_action.publish(act)
-        await_observation()
-        obs = observation
-        rew = reward
+        obs, rew = await_observation()
         done = np.min(ranges) < crash_distance
         info = None
         reset_observation()
@@ -148,8 +159,7 @@ class NeurocarEnv(gym.Env):
     def reset(self):
         pub_state.publish(get_random_state())
         reset_observation()
-        await_observation()
-        obs = observation
+        obs, _ = await_observation()
         reset_observation()
         return obs
 

@@ -30,7 +30,7 @@ with open(logfile, "w+") as f:
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-BATCH_SIZE = 128
+BATCH_SIZE = 256
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
@@ -44,7 +44,12 @@ def append_log(s):
     with open(logfile, "a") as f:
         f.write(s + "\n")
 append_log("loading models...")
-policy_net = DQN(img_height, img_width, n_actions).to(device)
+policy_net = None
+network_path = "/home/rg/neuro_car_catkin/target_net.pt"
+if os.path.exists(network_path):
+    policy_net = torch.load(network_path)
+else:
+    policy_net = DQN(img_height, img_width, n_actions).to(device)
 target_net = DQN(img_height, img_width, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 append_log("successfully loaded models!")
@@ -76,25 +81,24 @@ def select_action(state):
         explore_act = random.randrange(n_actions)
         return torch.tensor([[explore_act]], device=device, dtype=torch.long)
 
-ep_rewards = []
-
+ep_durations = []
 
 def plot_rewards():
     plt.figure(2)
     plt.clf()
-    rewards_t = torch.tensor(ep_rewards, dtype=torch.float)
+    durations_t = torch.tensor(ep_durations, dtype=torch.float)
     plt.title('Training...')
     plt.xlabel('Episode')
     plt.ylabel('Duration')
-    plt.plot(rewards_t.numpy())
+    plt.plot(durations_t.numpy())
     # Take 100 episode averages and plot them too
-    if len(rewards_t) >= 100:
-        means = rewards_t.unfold(0, 100, 1).mean(1).view(-1)
+    if len(durations_t) >= 100:
+        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
         means = torch.cat((torch.zeros(99), means))
         plt.plot(means.numpy())
 
     plt.pause(0.001)  # pause a bit so that plots are updated
-    plt.savefig("neurocar_rewards_plot.png")
+    plt.savefig("neurocar_durations_plot.png")
 
 def optimize_model():
     if len(memory) < BATCH_SIZE:
@@ -146,12 +150,10 @@ for i_episode in range(num_episodes):
     # Initialize the environment and state
     obs0 = env.reset()
     state = state_from_obs(obs0)
-    ep_rew = 0
     for t in count():
         # Select and perform an action
         action = select_action(state)
         obs, rew, done, _ = env.step(action)
-        ep_rew += rew
         reward = torch.tensor([rew], device=device)
         next_state = None
         if not done:
@@ -165,10 +167,10 @@ for i_episode in range(num_episodes):
 
         # Perform one step of the optimization (on the target network)
         optimize_model()
-        if t == 999 or done:
-            ep_rewards.append(ep_rew)
+        if done:
+            ep_durations.append(t+1)
             epsilon = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
-            append_log(f"Episode {i_episode+1} completed. cumulative reward: {ep_rew}\t\tepsilon: {epsilon}")
+            append_log(f"Episode {i_episode+1} completed. duration: {t+1}\t\tepsilon: {epsilon}")
             torch.save(target_net, "target_net.pt")
             plot_rewards()
             break
