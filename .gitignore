@@ -4,3 +4,4 @@ install/*
 logs/*
 bags/*
 .idea
+*.pt

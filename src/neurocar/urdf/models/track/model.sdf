@@ -30,7 +30,7 @@
         <material>
           <script>
             <uri>model://urdf/gazebo.material</uri>
-            <name>Gazebo/Black</name>
+            <name>Gazebo/Grey</name>
           </script>
         </material>
       </visual>

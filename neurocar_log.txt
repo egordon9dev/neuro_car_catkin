@@ -1,0 +1,20 @@
+Neurocar Log:
+loading models...
+successfully loaded models!
+beginning training...
+Episode 1 completed. duration: 313		epsilon: 0.8738070579222204
+Episode 2 completed. duration: 97		epsilon: 0.865854760455629
+Episode 3 completed. duration: 102		epsilon: 0.8575753387322329
+Episode 4 completed. duration: 133		epsilon: 0.8469056971227423
+Episode 5 completed. duration: 74		epsilon: 0.8410303605205569
+Episode 6 completed. duration: 145		epsilon: 0.8296431768866025
+Episode 7 completed. duration: 283		epsilon: 0.8078885547856677
+Episode 8 completed. duration: 92		epsilon: 0.8009479557913028
+Episode 9 completed. duration: 130		epsilon: 0.7912488133875113
+Episode 10 completed. duration: 45		epsilon: 0.7879206876264402
+Episode 11 completed. duration: 94		epsilon: 0.7810167325874823
+Episode 12 completed. duration: 237		epsilon: 0.7638953260948289
+Episode 13 completed. duration: 251		epsilon: 0.7461995642534462
+Episode 14 completed. duration: 123		epsilon: 0.7376887583690326
+Episode 15 completed. duration: 132		epsilon: 0.7286709154604568
+Episode 16 completed. duration: 63		epsilon: 0.7244087286785922

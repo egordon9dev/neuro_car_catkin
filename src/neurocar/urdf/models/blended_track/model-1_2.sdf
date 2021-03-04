@@ -30,7 +30,7 @@
         <material>
           <script>
             <uri>model://urdf/gazebo.material</uri>
-            <name>Gazebo/Texture_blend</name>
+            <name>Gazebo/Dirt</name>
           </script>
         </material>
       </visual>

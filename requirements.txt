@@ -1,3 +1,8 @@
 opencv-python
 keras
 nengo
+torch
+torchvision
+torchaudio
+gym
+scipy
